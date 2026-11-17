@@ -1,2 +1,2 @@
-# Portif-lio-website-Paola-
+# Portifolio-website-Paola-
 Personal and profissional portifolio website 
