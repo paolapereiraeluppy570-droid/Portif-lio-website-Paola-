@@ -23,8 +23,8 @@ html {
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--fundo);
-  color: var(--preto);
+  background: #080808;
+  color: #ffffff;
   line-height: 1.7;
 }
 
