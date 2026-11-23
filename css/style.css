@@ -167,8 +167,8 @@ h3 {
 
 .btn {
   display: inline-block;
-  background: var(--verde-escuro);
-  color: white;
+  background: #7FE3D2;
+  color: #080808;
   padding: 13px 24px;
   border-radius: 30px;
   border: 0;
