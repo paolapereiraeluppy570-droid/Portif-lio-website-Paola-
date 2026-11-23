@@ -9,10 +9,11 @@ const portfolioData = {
   universidade: "UDF",
  profissao: "PP Studio | Social Media, Marketing, Design e Tecnologia",
 
-  apresentacao:
-    Entre a tecnologia, a criatividade e a comunicação, construo minha trajetória explorando diferentes formas de transformar ideias em realidade. Sou estudante de Ciência da Computação, trabalho com Social Media, marketing e criação de conteúdo, além de estar à frente da PP Studio.
+    apresentacao: `Entre a tecnologia, a criatividade e a comunicação, construo minha trajetória explorando diferentes formas de transformar ideias em realidade. Sou estudante de Ciência da Computação, trabalho com Social Media, marketing e criação de conteúdo, além de estar à frente da PP Studio.
+
 Gosto de criar, desenvolver projetos, registrar experiências e compartilhar um pouco da minha rotina, dos meus interesses e dos aprendizados que fazem parte da minha jornada.
-Acredito que a tecnologia abre caminhos, a criatividade dá vida às ideias e cada experiência nos permite enxergar novas possibilidades. Aqui, você encontra um pouco de tudo isso: meu trabalho, meus projetos e o universo que estou construindo.
+
+Acredito que a tecnologia abre caminhos, a criatividade dá vida às ideias e cada experiência nos permite enxergar novas possibilidades. Aqui, você encontra um pouco de tudo isso: meu trabalho, meus projetos e o universo que estou construindo.`,
 
   sobre:
     "Sou estudante de Ciência da Computação e trabalho com comunicação digital, criação de conteúdo e desenvolvimento de projetos. Gosto de unir tecnologia, design e criatividade. Estou construindo minha trajetória, aprendendo na prática e transformando ideias em projetos reais.",
