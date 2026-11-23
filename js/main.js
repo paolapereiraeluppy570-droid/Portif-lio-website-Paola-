@@ -28,7 +28,9 @@ let data = readData();
 function renderHeader() {
   $("#header").innerHTML = `
     <div class="container navbar">
-      <a class="logo" href="index.html">PP Studio <span>| Paola Pereira</span></a>
+    <a class="logo" href="index.html">
+  <img src="ativos/logo-pp.png" alt="Logo PP Studio">
+</a>
       <button class="menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
       <nav class="nav-links" id="navLinks">
         ${pages.map(([name, url, id]) =>
