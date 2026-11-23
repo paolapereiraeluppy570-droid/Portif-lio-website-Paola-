@@ -204,10 +204,11 @@ h3 {
 }
 
 .card {
-  background: white;
+  background: #7FE3D2;
+  color: #080808;
   padding: 27px;
   border-radius: 15px;
-  border: 1px solid #eee;
+  border: 1px solid #7FE3D2;
   transition: .2s;
 }
 
@@ -397,4 +398,31 @@ footer p {
   h1 {
     font-size: 42px;
   }
+}
+body,
+main,
+section,
+.section {
+  background-color: #080808;
+}
+
+body {
+  color: #ffffff;
+}
+
+body > main h1,
+body > main h2,
+body > main h3,
+body > main p,
+body > main li {
+  color: #ffffff;
+}
+
+.card,
+.card h1,
+.card h2,
+.card h3,
+.card p,
+.card li {
+  color: #080808;
 }
