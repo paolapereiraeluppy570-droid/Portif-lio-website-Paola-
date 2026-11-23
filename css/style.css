@@ -399,12 +399,6 @@ footer p {
     font-size: 42px;
   }
 }
-body,
-main,
-section,
-.section {
-  background-color: #080808;
-}
 
 body {
   color: #ffffff;
@@ -425,4 +419,12 @@ body > main li {
 .card p,
 .card li {
   color: #080808;
+}
+
+html,
+body,
+main,
+section,
+.section {
+  background-color: #080808 !important;
 }
