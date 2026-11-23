@@ -48,8 +48,9 @@ img {
 }
 
 header {
-  background: rgba(250,249,247,.96);
-  border-bottom: 1px solid #eee;
+  background: #080808;
+  color: #ffffff;
+  border-bottom: 1px solid #222;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -67,10 +68,11 @@ header {
   font-family: 'Playfair Display', serif;
   font-size: 25px;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .logo span {
-  color: var(--verde-escuro);
+  color: #7FE3D2;
 }
 
 .nav-links {
@@ -124,6 +126,7 @@ header {
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
   line-height: 1.2;
+  color: #ffffff;
 }
 
 h1 {
