@@ -7,7 +7,7 @@ const portfolioData = {
   cidade: "Brasília - DF",
   curso: "Ciência da Computação",
   universidade: "UDF",
-  profissao: "Social Media e estudante de tecnologia",
+ profissao: "PP Studio | Social Media, Marketing, Design e Tecnologia",
 
   apresentacao:
     "Entre a tecnologia e a criatividade, construo ideias, desenvolvo projetos e transformo aprendizados em experiências.",
