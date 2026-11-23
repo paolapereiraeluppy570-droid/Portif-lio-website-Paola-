@@ -30,6 +30,7 @@ function renderHeader() {
     <div class="container navbar">
     <a class="logo" href="index.html">
   <img src="ativos/logo-pp.png" alt="Logo PP Studio">
+  <span>PP Studio | Paola Pereira</span>
 </a>
       <button class="menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
       <nav class="nav-links" id="navLinks">
