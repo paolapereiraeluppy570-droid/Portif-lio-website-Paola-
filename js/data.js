@@ -1,6 +1,7 @@
 
 const portfolioData = {
   nome: "Paola Pereira",
+  marca: "PP Studio",
   idade: 19,
   aniversario: "2007-04-20",
   cidade: "Brasília - DF",
