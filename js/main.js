@@ -1,4 +1,5 @@
 
+
 const $ = (selector) => document.querySelector(selector);
 
 const page = document.body.dataset.page || "inicio";
@@ -14,25 +15,72 @@ const pages = [
   ["Contato", "contato.html", "contato"]
 ];
 
-const readData = () => {
+function getLocalData() {
   try {
     const saved = JSON.parse(localStorage.getItem("paolaPortfolio"));
-    return saved || portfolioData;
+    return saved
+      ? { ...portfolioData, ...saved }
+      : { ...portfolioData };
   } catch {
-    return portfolioData;
+    return { ...portfolioData };
   }
-};
+}
 
-let data = readData();
+let data = getLocalData();
+
+async function loadPortfolioData() {
+  try {
+    const { data: result, error } = await supabaseClient
+      .from("conteudo_site")
+      .select("conteudo")
+      .eq("secao", "portfolio")
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (result && result.conteudo) {
+      const remoteData = JSON.parse(result.conteudo);
+      data = { ...portfolioData, ...remoteData };
+    }
+
+    localStorage.setItem("paolaPortfolio", JSON.stringify(data));
+  } catch (error) {
+    console.error("Erro ao carregar dados:", error);
+    data = getLocalData();
+  }
+}
+
+async function saveData() {
+  try {
+    const { error } = await supabaseClient
+      .from("conteudo_site")
+      .upsert(
+        {
+          secao: "portfolio",
+          conteudo: JSON.stringify(data)
+        },
+        { onConflict: "secao" }
+      );
+
+    if (error) throw error;
+
+    localStorage.setItem("paolaPortfolio", JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error("Erro ao salvar:", error);
+    alert("Não foi possível salvar na nuvem. Confira sua conexão e tente novamente.");
+    return false;
+  }
+}
 
 function renderHeader() {
   $("#header").innerHTML = `
     <div class="container navbar">
-    <a class="logo" href="index.html">
- <img src="./imagem/Logo-pp.png" alt="Logo PP Studio">
-  <span>PP Studio | Paola Pereira</span>
-</a>
-  <button class="menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
+      <a class="logo" href="index.html">
+        <img src="./imagem/Logo-pp.png" alt="Logo PP Studio">
+        <span>PP Studio | Paola Pereira</span>
+      </a>
+      <button class="menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
       <nav class="nav-links" id="navLinks">
         ${pages.map(([name, url, id]) =>
           `<a class="${page === id ? "active" : ""}" href="${url}">${name}</a>`
@@ -261,10 +309,58 @@ function renderContact() {
     event.preventDefault();
     const form = new FormData(event.target);
     const message = `Olá, Paola! Sou ${form.get("nome")}.\n${form.get("mensagem")}`;
+
     window.open(
       `https://wa.me/?text=${encodeURIComponent(message)}`,
       "_blank"
     );
+  });
+}
+
+function renderAdminLogin(message = "") {
+  $("#conteudo").innerHTML = `
+    ${heading("Acesso administrativo", "Entre para editar seu portfólio.")}
+    <section class="section">
+      <div class="container">
+        <div class="admin-panel">
+          <h2>Entrar</h2>
+          <form id="loginForm" class="admin-form">
+            <label>E-mail</label>
+            <input name="email" type="email" required placeholder="Seu e-mail cadastrado">
+            <label>Senha</label>
+            <input name="password" type="password" required placeholder="Sua senha">
+            <button class="btn" type="submit">Entrar no painel</button>
+            <p id="loginMessage">${message}</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  `;
+
+  $("#loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const form = new FormData(event.target);
+    const button = event.target.querySelector("button");
+    button.disabled = true;
+    button.textContent = "Entrando...";
+
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: form.get("email"),
+      password: form.get("password")
+    });
+
+    if (error) {
+      $("#loginMessage").textContent =
+        "Não foi possível entrar. Confira seu e-mail e sua senha.";
+      button.disabled = false;
+      button.textContent = "Entrar no painel";
+      return;
+    }
+
+    await loadPortfolioData();
+    renderAdmin();
+    renderFooter();
   });
 }
 
@@ -274,8 +370,11 @@ function renderAdmin() {
     <section class="section">
       <div class="container">
         <div class="notice">
-          Atenção: esta versão salva alterações somente neste navegador.
-          Ainda não existe login seguro nem sincronização entre dispositivos.
+          Suas alterações serão salvas na nuvem e poderão aparecer em todos os dispositivos.
+        </div>
+
+        <div class="admin-panel">
+          <button class="btn btn-secondary" id="logoutButton">Sair do painel</button>
         </div>
 
         <div class="admin-panel">
@@ -328,7 +427,18 @@ function renderAdmin() {
     </section>
   `;
 
-  $("#adminForm").addEventListener("submit", event => {
+  $("#logoutButton").addEventListener("click", async () => {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+      alert("Não foi possível sair. Tente novamente.");
+      return;
+    }
+
+    renderAdminLogin("Você saiu do painel.");
+  });
+
+  $("#adminForm").addEventListener("submit", async event => {
     event.preventDefault();
     const form = new FormData(event.target);
 
@@ -338,11 +448,12 @@ function renderAdmin() {
     data.sobre = form.get("sobre");
     data.foto = form.get("foto");
 
-    saveData();
-    alert("Informações salvas neste navegador!");
+    if (await saveData()) {
+      alert("Informações salvas na nuvem!");
+    }
   });
 
-  $("#projectForm").addEventListener("submit", event => {
+  $("#projectForm").addEventListener("submit", async event => {
     event.preventDefault();
     const form = new FormData(event.target);
 
@@ -355,10 +466,11 @@ function renderAdmin() {
       destaque: form.get("destaque") === "on"
     });
 
-    saveData();
-    event.target.reset();
-    showAdminProjects();
-    alert("Projeto adicionado!");
+    if (await saveData()) {
+      event.target.reset();
+      showAdminProjects();
+      alert("Projeto salvo na nuvem!");
+    }
   });
 
   $("#exportData").addEventListener("click", () => {
@@ -366,6 +478,7 @@ function renderAdmin() {
       [JSON.stringify(data, null, 2)],
       { type: "application/json" }
     );
+
     const url = URL.createObjectURL(file);
     const link = document.createElement("a");
     link.href = url;
@@ -374,12 +487,15 @@ function renderAdmin() {
     URL.revokeObjectURL(url);
   });
 
-  $("#resetData").addEventListener("click", () => {
+  $("#resetData").addEventListener("click", async () => {
     if (!confirm("Deseja restaurar os dados iniciais?")) return;
-    localStorage.removeItem("paolaPortfolio");
-    data = structuredClone(portfolioData);
-    saveData();
-    renderAdmin();
+
+    data = JSON.parse(JSON.stringify(portfolioData));
+
+    if (await saveData()) {
+      alert("Dados iniciais restaurados!");
+      renderAdmin();
+    }
   });
 
   showAdminProjects();
@@ -401,7 +517,7 @@ function showAdminProjects() {
   `).join("");
 
   container.querySelectorAll("button").forEach(button => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const index = Number(button.dataset.index);
       const action = button.dataset.action;
 
@@ -420,32 +536,41 @@ function showAdminProjects() {
           [data.projetos[index], data.projetos[index + 1]];
       }
 
-      saveData();
-      showAdminProjects();
+      if (await saveData()) {
+        showAdminProjects();
+      }
     });
   });
 }
 
-function saveData() {
-  localStorage.setItem("paolaPortfolio", JSON.stringify(data));
-}
-
-function start() {
+async function start() {
+  await loadPortfolioData();
   renderHeader();
 
-  const renderers = {
-    inicio: renderHome,
-    sobre: renderAbout,
-    servicos: renderServices,
-    projetos: renderProjects,
-    certificados: renderCertificates,
-    eventos: renderEvents,
-    diario: renderDiary,
-    contato: renderContact,
-    admin: renderAdmin
-  };
+  if (page === "admin") {
+    const { data: sessionData, error } =
+      await supabaseClient.auth.getSession();
 
-  (renderers[page] || renderHome)();
+    if (error || !sessionData.session) {
+      renderAdminLogin();
+    } else {
+      renderAdmin();
+    }
+  } else {
+    const renderers = {
+      inicio: renderHome,
+      sobre: renderAbout,
+      servicos: renderServices,
+      projetos: renderProjects,
+      certificados: renderCertificates,
+      eventos: renderEvents,
+      diario: renderDiary,
+      contato: renderContact
+    };
+
+    (renderers[page] || renderHome)();
+  }
+
   renderFooter();
 }
 
