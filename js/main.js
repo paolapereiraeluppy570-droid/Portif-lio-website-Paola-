@@ -436,8 +436,9 @@ function renderAdmin() {
             <input name="categoria">
             <label>Descrição</label>
             <textarea name="descricao" required></textarea>
-            <label>Imagem (caminho)</label>
-            <input name="imagem" placeholder="assets/images/meu-projeto.jpg">
+            <label>Imagem do projeto</label>
+<input type="file" id="projetoImagemUpload" accept="image/png,image/jpeg,image/webp">
+<input name="imagem" id="projetoImagemCaminho" type="hidden">
             <label>Link do projeto</label>
             <input name="link" type="url">
             <label><input type="checkbox" name="destaque"> Mostrar na página inicial</label>
@@ -459,7 +460,31 @@ function renderAdmin() {
       </div>
     </section>
   `;
+  
+  $("#fotoUpload").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
 
+    const url = await uploadImage(file);
+
+    if (url) {
+      $("#fotoCaminho").value = url;
+      alert("Foto enviada com sucesso!");
+    }
+  });
+
+    $("#projetoImagemUpload").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const url = await uploadImage(file);
+
+    if (url) {
+      $("#projetoImagemCaminho").value = url;
+      alert("Imagem do projeto enviada com sucesso!");
+    }
+  });
+  
   $("#logoutButton").addEventListener("click", async () => {
     const { error } = await supabaseClient.auth.signOut();
 
