@@ -445,3 +445,19 @@ section,
 .section {
   background-color: #080808;
 }
+
+/* CORREÇÃO DOS FUNDOS CLAROS */
+
+.hero,
+.page-heading {
+  background: #080808 !important;
+  background-image: none !important;
+  color: #ffffff;
+}
+
+.hero p,
+.page-heading p,
+.hero h1,
+.page-heading h1 {
+  color: #ffffff;
+}
