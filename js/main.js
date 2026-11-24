@@ -420,8 +420,9 @@ function renderAdmin() {
             <textarea name="apresentacao">${data.apresentacao}</textarea>
             <label>Sobre mim</label>
             <textarea name="sobre">${data.sobre}</textarea>
-            <label>Foto (caminho da imagem)</label>
-            <input name="foto" value="${data.foto}">
+            <label>Foto pessoal</label>
+<input type="file" id="fotoUpload" accept="image/png,image/jpeg,image/webp">
+<input name="foto" id="fotoCaminho" value="${data.foto}" type="hidden">
             <button class="btn" type="submit">Salvar alterações</button>
           </form>
         </div>
