@@ -1,4 +1,3 @@
-
 const $ = selector => document.querySelector(selector);
 
 const page = document.body.dataset.page || "inicio";
@@ -12,6 +11,29 @@ const pages = [
   ["Eventos", "eventos.html", "eventos"],
   ["Diário", "diario.html", "diario"],
   ["Contato", "contato.html", "contato"]
+];
+
+/* CONTATOS INICIAIS */
+
+const defaultContacts = [
+  {
+    id: "whatsapp",
+    nome: "WhatsApp",
+    url: "https://wa.me/message/OQVCHWIGD4X4H1",
+    principal: true
+  },
+  {
+    id: "instagram",
+    nome: "Instagram",
+    url: "https://www.instagram.com/paolapereirar?fqnt=NnpncDN2cHVrNnZjlikdin",
+    principal: false
+  },
+  {
+    id: "linkedin",
+    nome: "LinkedIn",
+    url: "https://www.linkedin.com/in/paola-pereira-a64626413?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+    principal: false
+  }
 ];
 
 const collections = {
@@ -111,6 +133,15 @@ function completeData(source) {
       id: item.id || `inicial-${key}-${index}`
     }));
   });
+
+  if (!Array.isArray(result.contatos)) {
+    result.contatos = JSON.parse(JSON.stringify(defaultContacts));
+  }
+
+  result.contatos = result.contatos.map((item, index) => ({
+    ...item,
+    id: item.id || `contato-${index}`
+  }));
 
   return result;
 }
@@ -478,38 +509,61 @@ function renderDiary() {
 /* CONTATO */
 
 function renderContact() {
+  const contacts = [...(data.contatos || [])];
+  const whatsapp = contacts.find(item =>
+    item.principal && safeURL(item.url)
+  );
+
+  const otherContacts = contacts.filter(item =>
+    item.id !== whatsapp?.id && safeURL(item.url)
+  );
+
   $("#conteudo").innerHTML = `
     ${heading("Vamos conversar?", "Entre em contato para projetos, parcerias e oportunidades.")}
 
     <section class="section">
       <div class="container">
-        <form class="contact-form" id="contactForm">
-          <label>Seu nome</label>
-          <input name="nome" required placeholder="Digite seu nome">
 
-          <label>Seu e-mail</label>
-          <input name="email" type="email" required placeholder="seu@email.com">
+        <div class="card">
+          <span class="eyebrow">Contato principal</span>
+          <h2>Vamos conversar pelo WhatsApp?</h2>
+          <p>Para projetos, parcerias ou oportunidades, será um prazer conversar com você.</p>
 
-          <label>Mensagem</label>
-          <textarea name="mensagem" required placeholder="Escreva sua mensagem"></textarea>
+          ${whatsapp ? `
+            <a class="btn"
+               href="${safeURL(whatsapp.url)}"
+               target="_blank"
+               rel="noopener noreferrer">
+              Conversar pelo WhatsApp
+            </a>
+          ` : `
+            <p>O contato principal será adicionado em breve.</p>
+          `}
+        </div>
 
-          <button class="btn" type="submit">Enviar mensagem</button>
-        </form>
+        ${otherContacts.length ? `
+          <div class="section-title" style="margin-top:40px">
+            <span class="eyebrow">Me encontre também</span>
+            <h2>Minhas redes</h2>
+          </div>
+
+          <div class="grid">
+            ${otherContacts.map(item => `
+              <article class="card">
+                <h3>${escapeHTML(item.nome)}</h3>
+                <a class="btn"
+                   href="${safeURL(item.url)}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                  Acessar ${escapeHTML(item.nome)}
+                </a>
+              </article>
+            `).join("")}
+          </div>
+        ` : ""}
       </div>
     </section>
   `;
-
-  $("#contactForm").addEventListener("submit", event => {
-    event.preventDefault();
-
-    const form = new FormData(event.target);
-    const message = `Olá, Paola! Sou ${form.get("nome")}.\n${form.get("mensagem")}`;
-
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
-  });
 }
 
 /* ENVIO DE IMAGENS */
@@ -709,12 +763,46 @@ function renderAdminCollections() {
   });
 }
 
+/* REDES SOCIAIS NO PAINEL */
+
+function renderAdminContacts() {
+  const container = $("#contatosLista");
+  if (!container) return;
+
+  container.innerHTML = data.contatos.map(item => `
+    <article class="card" style="margin:15px 0;padding:15px">
+      <h3>${escapeHTML(item.nome)}</h3>
+      <p style="word-break:break-all">${escapeHTML(item.url)}</p>
+
+      ${item.principal ? `
+        <p><strong>Contato principal</strong></p>
+      ` : ""}
+
+      <div class="admin-actions">
+        <button class="btn" type="button"
+          data-contact-edit="${escapeHTML(item.id)}">
+          Editar
+        </button>
+
+        <button class="btn btn-secondary" type="button"
+          data-contact-delete="${escapeHTML(item.id)}">
+          Excluir
+        </button>
+      </div>
+    </article>
+  `).join("") || "<p>Nenhuma rede cadastrada ainda.</p>";
+}
+
 /* PAINEL ADMINISTRATIVO */
 
 function renderAdmin() {
   Object.keys(collections).forEach(type => {
     if (!Array.isArray(data[type])) data[type] = [];
   });
+
+  if (!Array.isArray(data.contatos)) {
+    data.contatos = JSON.parse(JSON.stringify(defaultContacts));
+  }
 
   $("#conteudo").innerHTML = `
     ${heading("Painel administrativo", "Gerencie todo o conteúdo do PP Studio.")}
@@ -797,6 +885,39 @@ function renderAdmin() {
 
             <button class="btn" type="submit">Salvar nova logo</button>
           </form>
+        </div>
+
+        <div class="admin-panel">
+          <h2>Redes sociais e contatos</h2>
+          <p>Adicione os links das suas redes. Você pode editar ou excluir quando quiser.</p>
+
+          <form id="contatosForm" class="admin-form">
+            <input type="hidden" name="contatoId">
+
+            <label>Nome da rede ou contato</label>
+            <input name="nome" required
+              placeholder="Ex.: WhatsApp, Instagram, TikTok, GitHub">
+
+            <label>Link do perfil</label>
+            <input name="url" type="url" required
+              placeholder="https://...">
+
+            <label>
+              <input type="checkbox" name="principal">
+              Definir como contato principal
+            </label>
+
+            <button class="btn" type="submit">
+              Salvar contato
+            </button>
+
+            <button class="btn btn-secondary" type="button"
+              id="cancelarContato">
+              Cancelar edição
+            </button>
+          </form>
+
+          <div id="contatosLista"></div>
         </div>
 
         ${Object.entries(collections).map(([type, config]) =>
@@ -910,6 +1031,64 @@ function renderAdmin() {
     }
   });
 
+  /* CADASTRAR, EDITAR E EXCLUIR REDES SOCIAIS */
+
+  $("#contatosForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const form = new FormData(event.target);
+    const contatoId = form.get("contatoId");
+    const nome = String(form.get("nome") || "").trim();
+    const url = String(form.get("url") || "").trim();
+    const principal = form.get("principal") === "on";
+
+    if (!nome || !safeURL(url)) {
+      alert("Confira o nome e o link informado.");
+      return;
+    }
+
+    if (principal) {
+      data.contatos.forEach(item => {
+        item.principal = false;
+      });
+    }
+
+    if (contatoId) {
+      const index = data.contatos.findIndex(item =>
+        item.id === contatoId
+      );
+
+      if (index !== -1) {
+        data.contatos[index] = {
+          ...data.contatos[index],
+          nome,
+          url,
+          principal
+        };
+      }
+    } else {
+      data.contatos.push({
+        id: crypto.randomUUID(),
+        nome,
+        url,
+        principal
+      });
+    }
+
+    if (await saveData()) {
+      event.target.reset();
+      event.target.elements.namedItem("contatoId").value = "";
+
+      renderAdminContacts();
+      alert("Contato salvo na nuvem!");
+    }
+  });
+
+  $("#cancelarContato").addEventListener("click", () => {
+    $("#contatosForm").reset();
+    $("#contatosForm").elements.namedItem("contatoId").value = "";
+  });
+
   /* CADASTRO, EDIÇÃO E IMAGENS DAS SEÇÕES */
 
   Object.entries(collections).forEach(([type, config]) => {
@@ -997,9 +1176,53 @@ function renderAdmin() {
   /* BOTÕES DE EDITAR, EXCLUIR E REORDENAR */
 
   $("#conteudo").addEventListener("click", async event => {
+    const contactEditButton = event.target.closest("[data-contact-edit]");
+    const contactDeleteButton = event.target.closest("[data-contact-delete]");
+
     const editButton = event.target.closest("[data-edit]");
     const deleteButton = event.target.closest("[data-delete]");
     const moveButton = event.target.closest("[data-move]");
+
+    /* EDITAR CONTATO */
+
+    if (contactEditButton) {
+      const id = contactEditButton.dataset.contactEdit;
+      const item = data.contatos.find(contact => contact.id === id);
+
+      if (!item) return;
+
+      const form = $("#contatosForm");
+
+      form.elements.namedItem("contatoId").value = item.id;
+      form.elements.namedItem("nome").value = item.nome;
+      form.elements.namedItem("url").value = item.url;
+      form.elements.namedItem("principal").checked = Boolean(item.principal);
+
+      form.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    /* EXCLUIR CONTATO */
+
+    if (contactDeleteButton) {
+      const id = contactDeleteButton.dataset.contactDelete;
+      const index = data.contatos.findIndex(item => item.id === id);
+
+      if (index === -1) return;
+
+      if (!confirm("Deseja excluir este contato?")) return;
+
+      const removed = data.contatos.splice(index, 1);
+
+      if (await saveData()) {
+        renderAdminContacts();
+        alert("Contato excluído!");
+      } else {
+        data.contatos.splice(index, 0, removed[0]);
+      }
+
+      return;
+    }
 
     if (editButton) {
       const type = editButton.dataset.edit;
@@ -1111,6 +1334,7 @@ function renderAdmin() {
   });
 
   renderAdminCollections();
+  renderAdminContacts();
 }
 
 /* INICIALIZAÇÃO DO SITE */
