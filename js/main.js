@@ -15,6 +15,13 @@ const pages = [
 ];
 
 const collections = {
+  servicos: {
+    title: "Serviços",
+    fields: [
+      ["titulo", "Nome do serviço"],
+      ["descricao", "Descrição", "textarea"]
+    ]
+  },
   projetos: {
     title: "Projetos",
     fields: [
@@ -98,6 +105,11 @@ function completeData(source) {
     "servicos"
   ].forEach(key => {
     if (!Array.isArray(result[key])) result[key] = [];
+
+    result[key] = result[key].map((item, index) => ({
+      ...item,
+      id: item.id || `inicial-${key}-${index}`
+    }));
   });
 
   return result;
@@ -166,10 +178,13 @@ function heading(title, description) {
 }
 
 function renderHeader() {
+  const logoAtual = data.logo || "./imagem/Logo-pp.png";
+
   $("#header").innerHTML = `
     <div class="container navbar">
       <a class="logo" href="index.html">
-        <img src="./imagem/Logo-pp.png" alt="Logo PP Studio">
+        <img src="${escapeHTML(logoAtual)}" alt="Logo PP Studio"
+             onerror="this.style.display='none'">
         <span>PP Studio | Paola Pereira</span>
       </a>
 
@@ -308,12 +323,12 @@ function renderServices() {
 
     <section class="section">
       <div class="container grid">
-        ${data.servicos.map(item => `
+        ${data.servicos.length ? data.servicos.map(item => `
           <article class="card">
             <h3>${escapeHTML(item.titulo)}</h3>
             <p>${escapeHTML(item.descricao)}</p>
           </article>
-        `).join("")}
+        `).join("") : "<p>Novos serviços serão adicionados em breve.</p>"}
       </div>
     </section>
   `;
@@ -604,13 +619,15 @@ function collectionForm(type, config) {
 
         ${fields}
 
-        <label>Imagem</label>
-        <input type="file" id="${type}Upload"
-          accept="image/png,image/jpeg,image/webp">
+        ${type !== "servicos" ? `
+          <label>Imagem</label>
+          <input type="file" id="${type}Upload"
+            accept="image/png,image/jpeg,image/webp">
 
-        <input type="hidden" name="imagem" id="${type}Imagem">
+          <input type="hidden" name="imagem" id="${type}Imagem">
 
-        <div id="${type}Preview"></div>
+          <div id="${type}Preview"></div>
+        ` : ""}
 
         <button class="btn" type="submit">
           Salvar ${config.title.toLowerCase()}
@@ -643,7 +660,7 @@ function renderAdminCollections() {
         ` : ""}
 
         <h3>${escapeHTML(item.titulo || "Sem título")}</h3>
-        <p>${escapeHTML(item.instituicao || item.categoria || item.data || "")}</p>
+        <p>${escapeHTML(item.instituicao || item.categoria || item.data || item.descricao || "")}</p>
 
         <div class="admin-actions">
           <button class="btn" type="button"
@@ -665,7 +682,7 @@ function renderAdminCollections() {
   });
 }
 
-/* PAINEL ADMINISTRATIVO COMPLETO */
+/* PAINEL ADMINISTRATIVO */
 
 function renderAdmin() {
   Object.keys(collections).forEach(type => {
@@ -730,6 +747,28 @@ function renderAdmin() {
             </div>
 
             <button class="btn" type="submit">Salvar perfil</button>
+          </form>
+        </div>
+
+        <div class="admin-panel">
+          <h2>Logo do PP Studio</h2>
+          <p>Escolha uma nova imagem para a identidade visual do seu site.</p>
+
+          <form id="logoForm" class="admin-form">
+            <label>Enviar nova logo</label>
+            <input type="file" id="logoUpload"
+              accept="image/png,image/jpeg,image/webp">
+
+            <input type="hidden" name="logo" id="logoCaminho"
+              value="${escapeHTML(data.logo || "./imagem/Logo-pp.png")}">
+
+            <div id="logoPreview">
+              <img src="${escapeHTML(data.logo || "./imagem/Logo-pp.png")}"
+                   alt="Logo atual do PP Studio"
+                   style="width:160px;max-height:120px;object-fit:contain;border-radius:10px">
+            </div>
+
+            <button class="btn" type="submit">Salvar nova logo</button>
           </form>
         </div>
 
@@ -812,29 +851,63 @@ function renderAdmin() {
     }
   });
 
+  /* ENVIAR E SALVAR LOGO */
+
+  $("#logoUpload").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const url = await uploadImage(file);
+
+    if (url) {
+      $("#logoCaminho").value = url;
+
+      $("#logoPreview").innerHTML = `
+        <img src="${escapeHTML(url)}" alt="Prévia da nova logo"
+             style="width:160px;max-height:120px;object-fit:contain;border-radius:10px">
+      `;
+
+      alert("Logo enviada! Agora clique em Salvar nova logo.");
+    }
+  });
+
+  $("#logoForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const form = new FormData(event.target);
+    data.logo = form.get("logo");
+
+    if (await saveData()) {
+      renderHeader();
+      alert("Logo do PP Studio salva na nuvem!");
+    }
+  });
+
   /* CADASTRO, EDIÇÃO E IMAGENS DAS SEÇÕES */
 
   Object.entries(collections).forEach(([type, config]) => {
     const formElement = document.getElementById(type + "Form");
 
-    document.getElementById(type + "Upload")
-      .addEventListener("change", async event => {
-        const file = event.target.files[0];
-        if (!file) return;
+    if (type !== "servicos") {
+      document.getElementById(type + "Upload")
+        .addEventListener("change", async event => {
+          const file = event.target.files[0];
+          if (!file) return;
 
-        const url = await uploadImage(file);
+          const url = await uploadImage(file);
 
-        if (url) {
-          document.getElementById(type + "Imagem").value = url;
+          if (url) {
+            document.getElementById(type + "Imagem").value = url;
 
-          document.getElementById(type + "Preview").innerHTML = `
-            <img src="${escapeHTML(url)}" alt="Prévia da imagem"
-                 style="width:150px;border-radius:10px">
-          `;
+            document.getElementById(type + "Preview").innerHTML = `
+              <img src="${escapeHTML(url)}" alt="Prévia da imagem"
+                   style="width:150px;border-radius:10px">
+            `;
 
-          alert("Imagem enviada! Agora salve o conteúdo.");
-        }
-      });
+            alert("Imagem enviada! Agora salve o conteúdo.");
+          }
+        });
+    }
 
     formElement.addEventListener("submit", async event => {
       event.preventDefault();
@@ -849,13 +922,20 @@ function renderAdmin() {
           : form.get(name);
       });
 
-      item.imagem = form.get("imagem") || "";
+      if (type !== "servicos") {
+        item.imagem = form.get("imagem") || "";
+      }
 
       if (itemId) {
         const index = data[type].findIndex(entry => entry.id === itemId);
 
         if (index !== -1) {
           item.id = itemId;
+
+          if (type === "servicos") {
+            item.imagem = data[type][index].imagem || "";
+          }
+
           data[type][index] = item;
         }
       } else {
@@ -865,19 +945,25 @@ function renderAdmin() {
 
       if (await saveData()) {
         formElement.reset();
-        document.getElementById(type + "Imagem").value = "";
-        document.getElementById(type + "Preview").innerHTML = "";
+
+        if (type !== "servicos") {
+          document.getElementById(type + "Imagem").value = "";
+          document.getElementById(type + "Preview").innerHTML = "";
+        }
 
         renderAdminCollections();
-        alert("Conteúdo salvo na nuvem!");
+        alert(`${config.title} salvo na nuvem!`);
       }
     });
 
     document.querySelector(`[data-cancel="${type}"]`)
       .addEventListener("click", () => {
         formElement.reset();
-        document.getElementById(type + "Imagem").value = "";
-        document.getElementById(type + "Preview").innerHTML = "";
+
+        if (type !== "servicos") {
+          document.getElementById(type + "Imagem").value = "";
+          document.getElementById(type + "Preview").innerHTML = "";
+        }
       });
   });
 
@@ -907,12 +993,14 @@ function renderAdmin() {
         }
       });
 
-      document.getElementById(type + "Preview").innerHTML =
-        item.imagem
-          ? `<img src="${escapeHTML(item.imagem)}"
-                 alt="Imagem atual"
-                 style="width:150px;border-radius:10px">`
-          : "";
+      if (type !== "servicos") {
+        document.getElementById(type + "Preview").innerHTML =
+          item.imagem
+            ? `<img src="${escapeHTML(item.imagem)}"
+                   alt="Imagem atual"
+                   style="width:150px;border-radius:10px">`
+            : "";
+      }
 
       form.scrollIntoView({ behavior: "smooth" });
     }
