@@ -177,15 +177,42 @@ function heading(title, description) {
   `;
 }
 
+/* CABEÇALHO COM LOGO REDIMENSIONADA */
+
 function renderHeader() {
   const logoAtual = data.logo || "./imagem/Logo-pp.png";
 
   $("#header").innerHTML = `
     <div class="container navbar">
-      <a class="logo" href="index.html">
-        <img src="${escapeHTML(logoAtual)}" alt="Logo PP Studio"
-             onerror="this.style.display='none'">
-        <span>PP Studio | Paola Pereira</span>
+      <a class="logo" href="index.html"
+        style="
+          display:flex;
+          align-items:center;
+          gap:10px;
+          flex-shrink:0;
+          max-width:100%;
+          text-decoration:none;
+        ">
+
+        <img
+          src="${escapeHTML(logoAtual)}"
+          alt="Logo PP Studio"
+          style="
+            width:45px !important;
+            height:45px !important;
+            max-width:45px !important;
+            max-height:45px !important;
+            min-width:45px;
+            object-fit:contain;
+            display:block;
+            flex-shrink:0;
+          "
+          onerror="this.style.display='none'"
+        >
+
+        <span style="white-space:nowrap;">
+          PP Studio | Paola Pereira
+        </span>
       </a>
 
       <button class="menu-button" id="menuButton"
