@@ -364,6 +364,38 @@ function renderAdminLogin(message = "") {
   });
 }
 
+async function uploadImage(file) {
+  if (!file) return null;
+
+  if (!file.type.startsWith("image/")) {
+    alert("Selecione um arquivo de imagem.");
+    return null;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("A imagem deve ter no máximo 5 MB.");
+    return null;
+  }
+
+  const extension = file.name.split(".").pop().toLowerCase();
+  const fileName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  const { error } = await supabaseClient.storage
+    .from("imagens-portfolio")
+    .upload(fileName, file);
+
+  if (error) {
+    alert("Erro ao enviar imagem: " + error.message);
+    return null;
+  }
+
+  const { data } = supabaseClient.storage
+    .from("imagens-portfolio")
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
+}
+
 function renderAdmin() {
   $("#conteudo").innerHTML = `
     ${heading("Painel administrativo", "Área de edição do conteúdo do portfólio.")}
