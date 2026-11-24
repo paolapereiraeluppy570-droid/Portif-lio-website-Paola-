@@ -3,10 +3,10 @@
 
 :root {
   --verde: #7FE3D2;
-  --verde-escuro: #36796e;
+  --verde-escuro: #7FE3D2;
   --rosa: #e9b7c9;
   --preto: #080808;
-  --cinza: #999999;
+  --cinza: #cccccc;
   --fundo: #080808;
   --branco: #ffffff;
 }
@@ -19,6 +19,7 @@
 
 html {
   scroll-behavior: smooth;
+  background: #080808;
 }
 
 body {
@@ -46,6 +47,8 @@ img {
   width: min(1120px, 90%);
   margin: auto;
 }
+
+/* CABEÇALHO */
 
 header {
   background: #080808;
@@ -88,10 +91,6 @@ header {
   color: #7FE3D2;
 }
 
-.logo span {
-  color: #7FE3D2;
-}
-
 .nav-links {
   display: flex;
   gap: 22px;
@@ -101,28 +100,32 @@ header {
 
 .nav-links a {
   font-size: 13px;
-  color: #555;
+  color: #cccccc;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
-  color: var(--verde-escuro);
+  color: var(--verde);
 }
 
 .menu-button {
   display: none;
   border: 0;
   background: none;
+  color: #ffffff;
   font-size: 25px;
   cursor: pointer;
 }
+
+/* PÁGINA INICIAL */
 
 .hero {
   padding: 100px 0;
   min-height: 580px;
   display: flex;
   align-items: center;
-  background: linear-gradient(120deg, #f6f3ef, #e8f4f0);
+  background: #080808 !important;
+  color: #ffffff;
 }
 
 .hero-content {
@@ -133,7 +136,7 @@ header {
 }
 
 .eyebrow {
-  color: var(--verde-escuro);
+  color: var(--verde);
   font-weight: 700;
   font-size: 12px;
   text-transform: uppercase;
@@ -143,6 +146,7 @@ header {
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
   line-height: 1.2;
+  color: #ffffff;
 }
 
 h1 {
@@ -160,8 +164,9 @@ h3 {
   margin-bottom: 10px;
 }
 
-.hero p, .section-intro {
-  color: #626262;
+.hero p,
+.section-intro {
+  color: #cccccc;
   max-width: 620px;
 }
 
@@ -173,16 +178,20 @@ h3 {
   background: var(--verde);
 }
 
+/* IMAGENS */
+
 .placeholder-image {
   min-height: 300px;
   display: grid;
   place-items: center;
   text-align: center;
-  color: var(--verde-escuro);
-  background: #e1eee9;
+  color: var(--verde);
+  background: #151515;
   border-radius: 14px;
   padding: 30px;
 }
+
+/* BOTÕES */
 
 .btn {
   display: inline-block;
@@ -197,7 +206,7 @@ h3 {
 }
 
 .btn:hover {
-  background: var(--preto);
+  background: #ffffff;
   transform: translateY(-2px);
 }
 
@@ -206,8 +215,12 @@ h3 {
   color: var(--preto);
 }
 
+/* SEÇÕES */
+
 .section {
   padding: 85px 0;
+  background: #080808;
+  color: #ffffff;
 }
 
 .section-title {
@@ -220,6 +233,8 @@ h3 {
   gap: 24px;
 }
 
+/* CARTÕES */
+
 .card {
   background: #7FE3D2;
   color: #080808;
@@ -231,7 +246,7 @@ h3 {
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 35px #0000000b;
+  box-shadow: 0 12px 35px #00000030;
 }
 
 .card img {
@@ -242,30 +257,46 @@ h3 {
   margin-bottom: 18px;
 }
 
+.card h1,
+.card h2,
+.card h3,
+.card p,
+.card li {
+  color: #080808;
+}
+
 .card p {
-  color: var(--cinza);
   font-size: 14px;
 }
 
 .tag {
   display: inline-block;
-  background: #e8f2ef;
-  color: var(--verde-escuro);
+  background: #ffffff;
+  color: #36796e;
   padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
   margin: 8px 5px 0 0;
 }
 
+/* TÍTULOS DAS PÁGINAS */
+
 .page-heading {
   padding: 75px 0 35px;
-  background: #eaf3ef;
+  background: #080808 !important;
+  color: #ffffff;
+}
+
+.page-heading h1 {
+  color: #ffffff;
 }
 
 .page-heading p {
-  color: #666;
+  color: #cccccc;
   max-width: 700px;
 }
+
+/* SOBRE MIM */
 
 .about-layout {
   display: grid;
@@ -273,6 +304,8 @@ h3 {
   gap: 45px;
   align-items: center;
 }
+
+/* GALERIA */
 
 .masonry {
   columns: 3 250px;
@@ -284,10 +317,11 @@ h3 {
   width: 100%;
   margin: 0 0 20px;
   break-inside: avoid;
-  background: white;
+  background: #151515;
+  color: #ffffff;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid #eee;
+  border: 1px solid #333;
 }
 
 .masonry-item img {
@@ -296,15 +330,21 @@ h3 {
   margin-bottom: 12px;
 }
 
+/* PESQUISA */
+
 .search-box {
   width: 100%;
   max-width: 450px;
   padding: 13px 18px;
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 30px;
   margin: 20px 0 30px;
-  outline-color: var(--verde-escuro);
+  outline-color: var(--verde);
+  background: #151515;
+  color: #ffffff;
 }
+
+/* CONTATO E FORMULÁRIOS */
 
 .contact-form {
   max-width: 650px;
@@ -317,10 +357,11 @@ h3 {
 .admin-form select {
   width: 100%;
   padding: 13px;
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 8px;
   margin: 8px 0 16px;
-  background: white;
+  background: #151515;
+  color: #ffffff;
 }
 
 .contact-form textarea,
@@ -329,24 +370,35 @@ h3 {
   resize: vertical;
 }
 
+/* RODAPÉ */
+
 footer {
-  background: #202020;
-  color: white;
+  background: #151515;
+  color: #ffffff;
   padding: 35px 0;
   text-align: center;
 }
 
 footer p {
-  color: #ccc;
+  color: #cccccc;
   font-size: 13px;
 }
 
+/* PAINEL ADMINISTRATIVO */
+
 .admin-panel {
-  background: white;
+  background: #151515;
+  color: #ffffff;
   padding: 30px;
   border-radius: 15px;
-  border: 1px solid #eee;
+  border: 1px solid #333;
   margin-bottom: 25px;
+}
+
+.admin-panel h2,
+.admin-panel p,
+.admin-panel label {
+  color: #ffffff;
 }
 
 .admin-actions {
@@ -356,12 +408,34 @@ footer p {
 }
 
 .notice {
-  background: #fff4e5;
+  background: #242019;
+  color: #ffffff;
   padding: 15px;
   border-radius: 10px;
   margin: 15px 0;
   font-size: 14px;
 }
+
+/* GARANTIA DOS FUNDOS ESCUROS */
+
+html,
+body,
+main,
+#conteudo,
+section,
+.section,
+.hero,
+.page-heading {
+  background-color: #080808 !important;
+  color: #ffffff;
+}
+
+.hero,
+.page-heading {
+  background-image: none !important;
+}
+
+/* RESPONSIVIDADE */
 
 @media (max-width: 800px) {
   .hero-content,
@@ -387,11 +461,11 @@ footer p {
     top: 76px;
     left: 0;
     right: 0;
-    background: white;
+    background: #151515;
     padding: 25px;
     flex-direction: column;
     align-items: flex-start;
-    box-shadow: 0 8px 15px #00000012;
+    box-shadow: 0 8px 15px #00000050;
   }
 
   .nav-links.open {
@@ -415,49 +489,4 @@ footer p {
   h1 {
     font-size: 42px;
   }
-}
-
-body {
-  color: #ffffff;
-}
-
-body > main h1,
-body > main h2,
-body > main h3,
-body > main p,
-body > main li {
-  color: #ffffff;
-}
-
-.card,
-.card h1,
-.card h2,
-.card h3,
-.card p,
-.card li {
-  color: #080808;
-}
-
-html,
-body,
-main,
-section,
-.section {
-  background-color: #080808;
-}
-
-/* CORREÇÃO DOS FUNDOS CLAROS */
-
-.hero,
-.page-heading {
-  background: #080808 !important;
-  background-image: none !important;
-  color: #ffffff;
-}
-
-.hero p,
-.page-heading p,
-.hero h1,
-.page-heading h1 {
-  color: #ffffff;
 }
