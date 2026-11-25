@@ -14,8 +14,6 @@ const pages = [
   ["Contato", "contato.html", "contato"]
 ];
 
-/* CONTATOS INICIAIS */
-
 const defaultContacts = [
   {
     id: "whatsapp",
@@ -83,7 +81,9 @@ const collections = {
   }
 };
 
-/* FUNÇÕES GERAIS */
+/* =====================================================
+   FUNÇÕES GERAIS
+===================================================== */
 
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -105,16 +105,36 @@ function safeURL(value) {
   return "";
 }
 
-function getLocalData() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("paolaPortfolio"));
+function newId() {
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+}
 
-    return saved
-      ? { ...portfolioData, ...saved }
-      : { ...portfolioData };
-  } catch {
-    return { ...portfolioData };
+function normalizeImages(item) {
+  let images = [];
+
+  if (Array.isArray(item.imagens)) {
+    images = item.imagens.map(image => {
+      if (typeof image === "string") {
+        return { url: image, posicao: "50% 50%" };
+      }
+
+      return {
+        url: image.url || "",
+        posicao: image.posicao || "50% 50%"
+      };
+    }).filter(image => image.url);
   }
+
+  if (!images.length && item.imagem) {
+    images = [{
+      url: item.imagem,
+      posicao: item.imagemPosicao || "50% 50%"
+    }];
+  }
+
+  return images;
 }
 
 function completeData(source) {
@@ -129,12 +149,18 @@ function completeData(source) {
   ].forEach(key => {
     if (!Array.isArray(result[key])) result[key] = [];
 
-    result[key] = result[key].map((item, index) => ({
-      ...item,
-      id: item.id || `inicial-${key}-${index}`,
-      imagemModo: item.imagemModo || "contain",
-      imagemAltura: Number(item.imagemAltura) || 320
-    }));
+    result[key] = result[key].map((item, index) => {
+      const images = normalizeImages(item);
+
+      return {
+        ...item,
+        id: item.id || `inicial-${key}-${index}`,
+        imagens: images,
+        imagem: images[0]?.url || item.imagem || "",
+        imagemModo: item.imagemModo || "contain",
+        imagemAltura: Number(item.imagemAltura) || 320
+      };
+    });
   });
 
   if (!Array.isArray(result.contatos)) {
@@ -149,13 +175,28 @@ function completeData(source) {
   result.fotoLargura = Number(result.fotoLargura) || 100;
   result.fotoAltura = Number(result.fotoAltura) || 440;
   result.fotoModo = result.fotoModo || "contain";
+  result.fotoPosicao = result.fotoPosicao || "50% 50%";
 
   return result;
 }
 
+function getLocalData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("paolaPortfolio"));
+
+    return saved
+      ? { ...portfolioData, ...saved }
+      : { ...portfolioData };
+  } catch {
+    return { ...portfolioData };
+  }
+}
+
 let data = completeData(getLocalData());
 
-/* CARREGAR E SALVAR NA NUVEM */
+/* =====================================================
+   SUPABASE
+===================================================== */
 
 async function loadPortfolioData() {
   try {
@@ -168,7 +209,11 @@ async function loadPortfolioData() {
     if (error) throw error;
 
     if (result && result.conteudo) {
-      data = completeData(JSON.parse(result.conteudo));
+      const savedContent = typeof result.conteudo === "string"
+        ? JSON.parse(result.conteudo)
+        : result.conteudo;
+
+      data = completeData(savedContent);
     }
 
     localStorage.setItem("paolaPortfolio", JSON.stringify(data));
@@ -201,7 +246,9 @@ async function saveData() {
   }
 }
 
-/* BOTÃO VOLTAR */
+/* =====================================================
+   NAVEGAÇÃO E TÍTULOS
+===================================================== */
 
 function backButton(destination = "index.html") {
   return `
@@ -211,8 +258,6 @@ function backButton(destination = "index.html") {
     </button>
   `;
 }
-
-/* TÍTULOS DAS PÁGINAS */
 
 function heading(title, description) {
   return `
@@ -227,7 +272,9 @@ function heading(title, description) {
   `;
 }
 
-/* ÍCONES DAS REDES SOCIAIS */
+/* =====================================================
+   ÍCONES SOCIAIS
+===================================================== */
 
 function socialIcon(name) {
   const key = String(name || "").toLowerCase();
@@ -285,7 +332,9 @@ function socialIcon(name) {
     : `<span>${escapeHTML(String(name || "?").charAt(0).toUpperCase())}</span>`;
 }
 
-/* CABEÇALHO E RODAPÉ */
+/* =====================================================
+   CABEÇALHO E RODAPÉ
+===================================================== */
 
 function renderHeader() {
   const logoAtual = data.logo || "./imagem/Logo-pp.png";
@@ -339,41 +388,67 @@ function renderFooter() {
   `;
 }
 
-/* ESTILO DAS IMAGENS DO CONTEÚDO */
+/* =====================================================
+   IMAGENS E GALERIAS
+===================================================== */
 
-function contentImage(item, alt = "") {
-  if (!item.imagem) return "";
-
-  const modo = item.imagemModo === "cover" ? "cover" : "contain";
-  const altura = Math.min(900, Math.max(100, Number(item.imagemAltura) || 320));
-
-  return `
-    <img
-      src="${escapeHTML(item.imagem)}"
-      alt="${escapeHTML(alt || item.titulo || "Imagem do portfólio")}"
-      style="
-        width:100%;
-        height:${altura}px;
-        max-height:none;
-        object-fit:${modo};
-        object-position:center;
-        background:#101010;
-        border-radius:10px;
-        display:block;
-      "
-      onerror="this.style.display='none'">
-  `;
+function getImages(item) {
+  return normalizeImages(item);
 }
 
-/* CARTÕES DE PROJETOS */
+function contentGallery(item, alt = "") {
+  const images = getImages(item);
+
+  if (!images.length) return "";
+
+  return `
+    <div class="pp-gallery"
+      style="
+        display:flex;
+        gap:12px;
+        overflow-x:auto;
+        scroll-snap-type:x mandatory;
+        padding-bottom:8px;
+        margin-bottom:15px;
+        -webkit-overflow-scrolling:touch;
+      ">
+      ${images.map((image, index) => `
+        <div style="
+          flex:0 0 100%;
+          min-width:0;
+          scroll-snap-align:start;
+        ">
+          <img
+            src="${escapeHTML(image.url)}"
+            alt="${escapeHTML(alt || item.titulo || "Imagem do portfólio")} ${index + 1}"
+            style="
+              width:100%;
+              height:${Math.min(900, Math.max(100, Number(item.imagemAltura) || 320))}px;
+              object-fit:${item.imagemModo === "cover" ? "cover" : "contain"};
+              object-position:${escapeHTML(image.posicao || "50% 50%")};
+              background:#101010;
+              border-radius:10px;
+              display:block;
+            "
+            onerror="this.style.display='none'">
+        </div>
+      `).join("")}
+    </div>
+
+    ${images.length > 1 ? `
+      <p style="font-size:12px;opacity:.7;margin-top:-5px">
+        Deslize para o lado para ver as ${images.length} fotos
+      </p>
+    ` : ""}
+  `;
+}
 
 function projectCard(project) {
   const link = safeURL(project.link);
 
   return `
     <article class="card">
-      ${contentImage(project, project.titulo)}
-
+      ${contentGallery(project, project.titulo)}
       <span class="tag">${escapeHTML(project.categoria || "Projeto")}</span>
       <h3>${escapeHTML(project.titulo)}</h3>
       <p>${escapeHTML(project.descricao)}</p>
@@ -386,7 +461,9 @@ function projectCard(project) {
   `;
 }
 
-/* PÁGINA INICIAL */
+/* =====================================================
+   PÁGINA INICIAL
+===================================================== */
 
 function renderHome() {
   const largura = Math.min(100, Math.max(30, Number(data.fotoLargura) || 100));
@@ -414,7 +491,7 @@ function renderHome() {
                 height:${altura}px;
                 max-height:none;
                 object-fit:${modo};
-                object-position:center;
+                object-position:${escapeHTML(data.fotoPosicao)};
               "
               onerror="this.style.display='none'">
           ` : ""}
@@ -439,7 +516,9 @@ function renderHome() {
   `;
 }
 
-/* SOBRE MIM */
+/* =====================================================
+   SOBRE MIM
+===================================================== */
 
 function renderAbout() {
   const birthday = new Date(data.aniversario + "T00:00:00");
@@ -470,7 +549,7 @@ function renderAbout() {
               height:${altura}px;
               max-height:none;
               object-fit:${modo};
-              object-position:center;
+              object-position:${escapeHTML(data.fotoPosicao)};
             ">
         ` : ""}
 
@@ -487,7 +566,9 @@ function renderAbout() {
   `;
 }
 
-/* SERVIÇOS */
+/* =====================================================
+   SERVIÇOS
+===================================================== */
 
 function renderServices() {
   $("#conteudo").innerHTML = `
@@ -506,7 +587,9 @@ function renderServices() {
   `;
 }
 
-/* PROJETOS */
+/* =====================================================
+   PROJETOS
+===================================================== */
 
 function renderProjects() {
   $("#conteudo").innerHTML = `
@@ -539,7 +622,9 @@ function renderProjects() {
   });
 }
 
-/* CERTIFICADOS */
+/* =====================================================
+   CERTIFICADOS
+===================================================== */
 
 function renderCertificates() {
   $("#conteudo").innerHTML = `
@@ -549,8 +634,7 @@ function renderCertificates() {
       <div class="container grid">
         ${data.certificados.length ? data.certificados.map(item => `
           <article class="card">
-            ${contentImage(item, "Certificado " + item.titulo)}
-
+            ${contentGallery(item, "Certificado " + item.titulo)}
             <h3>${escapeHTML(item.titulo)}</h3>
             <p>${escapeHTML(item.instituicao || "")}</p>
             <p>${escapeHTML(item.ano || "")}</p>
@@ -566,7 +650,9 @@ function renderCertificates() {
   `;
 }
 
-/* EVENTOS */
+/* =====================================================
+   EVENTOS
+===================================================== */
 
 function renderEvents() {
   $("#conteudo").innerHTML = `
@@ -576,8 +662,7 @@ function renderEvents() {
       <div class="container grid">
         ${data.eventos.length ? data.eventos.map(item => `
           <article class="card">
-            ${contentImage(item, item.titulo)}
-
+            ${contentGallery(item, item.titulo)}
             <h3>${escapeHTML(item.titulo)}</h3>
             <p>${escapeHTML(item.data || "")}</p>
             <p>${escapeHTML(item.local || "")}</p>
@@ -589,7 +674,9 @@ function renderEvents() {
   `;
 }
 
-/* DIÁRIO */
+/* =====================================================
+   DIÁRIO
+===================================================== */
 
 function renderDiary() {
   $("#conteudo").innerHTML = `
@@ -599,8 +686,7 @@ function renderDiary() {
       <div class="container">
         ${data.diario.map(item => `
           <article class="card" style="margin-bottom:20px">
-            ${contentImage(item, item.titulo)}
-
+            ${contentGallery(item, item.titulo)}
             <span class="eyebrow">${escapeHTML(item.data || "")}</span>
             <h3>${escapeHTML(item.titulo)}</h3>
             <p>${escapeHTML(item.texto)}</p>
@@ -611,7 +697,9 @@ function renderDiary() {
   `;
 }
 
-/* CONTATO */
+/* =====================================================
+   CONTATO
+===================================================== */
 
 function renderContact() {
   const contacts = [...(data.contatos || [])];
@@ -628,7 +716,6 @@ function renderContact() {
 
     <section class="section">
       <div class="container">
-
         <div class="card">
           <span class="eyebrow">Contato principal</span>
           <h2>Vamos conversar?</h2>
@@ -642,9 +729,7 @@ function renderContact() {
               ${socialIcon("WhatsApp")}
               Conversar pelo WhatsApp
             </a>
-          ` : `
-            <p>O contato principal será adicionado em breve.</p>
-          `}
+          ` : "<p>O contato principal será adicionado em breve.</p>"}
         </div>
 
         ${otherContacts.length ? `
@@ -670,7 +755,9 @@ function renderContact() {
   `;
 }
 
-/* ENVIO DE IMAGENS */
+/* =====================================================
+   UPLOAD DE IMAGENS
+===================================================== */
 
 async function uploadImage(file) {
   if (!file) return null;
@@ -692,7 +779,7 @@ async function uploadImage(file) {
   }
 
   const extension = file.name.split(".").pop().toLowerCase();
-  const fileName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+  const fileName = `${Date.now()}-${newId()}.${extension}`;
 
   const { error } = await supabaseClient.storage
     .from("imagens-portfolio")
@@ -711,7 +798,140 @@ async function uploadImage(file) {
   return publicData.publicUrl;
 }
 
-/* LOGIN ADMINISTRATIVO */
+/* =====================================================
+   PRÉVIA E AJUSTE MANUAL DAS FOTOS
+===================================================== */
+
+function renderImagePreviews(container, images, mode = "contain") {
+  if (!container) return;
+
+  container.innerHTML = images.map((image, index) => `
+    <div class="pp-image-edit"
+      data-image-index="${index}"
+      style="
+        display:inline-flex;
+        flex-direction:column;
+        vertical-align:top;
+        width:180px;
+        margin:8px;
+        gap:7px;
+      ">
+      <div class="pp-image-frame"
+        style="
+          position:relative;
+          width:180px;
+          height:180px;
+          overflow:hidden;
+          background:#171717;
+          border:1px solid #555;
+          border-radius:10px;
+          touch-action:none;
+          cursor:grab;
+        ">
+        <img
+          src="${escapeHTML(image.url)}"
+          data-position="${escapeHTML(image.posicao || "50% 50%")}"
+          style="
+            width:100%;
+            height:100%;
+            object-fit:${mode === "cover" ? "cover" : "contain"};
+            object-position:${escapeHTML(image.posicao || "50% 50%")};
+            pointer-events:none;
+          ">
+      </div>
+
+      <small>Arraste a foto para ajustar</small>
+
+      <button type="button"
+        class="btn btn-secondary"
+        data-remove-image="${index}">
+        Excluir esta foto
+      </button>
+    </div>
+  `).join("");
+}
+
+function attachImageDragging(container, images, onChange) {
+  if (!container) return;
+
+  container.querySelectorAll(".pp-image-frame").forEach(frame => {
+    const image = frame.querySelector("img");
+    const wrapper = frame.closest("[data-image-index]");
+    const index = Number(wrapper.dataset.imageIndex);
+
+    let startX = 0;
+    let startY = 0;
+    let originX = 50;
+    let originY = 50;
+    let dragging = false;
+
+    const current = String(images[index]?.posicao || "50% 50%")
+      .split(" ")
+      .map(value => Number(value.replace("%", "")));
+
+    originX = current[0] || 50;
+    originY = current[1] || 50;
+
+    frame.addEventListener("pointerdown", event => {
+      dragging = true;
+      startX = event.clientX;
+      startY = event.clientY;
+      frame.setPointerCapture(event.pointerId);
+      frame.style.cursor = "grabbing";
+    });
+
+    frame.addEventListener("pointermove", event => {
+      if (!dragging) return;
+
+      const rect = frame.getBoundingClientRect();
+
+      const deltaX = (event.clientX - startX) / rect.width * 100;
+      const deltaY = (event.clientY - startY) / rect.height * 100;
+
+      const x = Math.max(0, Math.min(100, originX - deltaX));
+      const y = Math.max(0, Math.min(100, originY - deltaY));
+
+      const position = `${x}% ${y}%`;
+
+      image.style.objectPosition = position;
+      image.dataset.position = position;
+
+      images[index].posicao = position;
+      onChange();
+    });
+
+    const stopDragging = () => {
+      if (!dragging) return;
+
+      dragging = false;
+      frame.style.cursor = "grab";
+
+      const values = image.dataset.position.split(" ");
+      originX = Number(values[0].replace("%", "")) || 50;
+      originY = Number(values[1].replace("%", "")) || 50;
+    };
+
+    frame.addEventListener("pointerup", stopDragging);
+    frame.addEventListener("pointercancel", stopDragging);
+  });
+
+  container.querySelectorAll("[data-remove-image]").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.removeImage);
+
+      if (!confirm("Deseja remover somente esta foto?")) return;
+
+      images.splice(index, 1);
+      onChange();
+      renderImagePreviews(container, images);
+      attachImageDragging(container, images, onChange);
+    });
+  });
+}
+
+/* =====================================================
+   LOGIN ADMINISTRATIVO
+===================================================== */
 
 function renderAdminLogin(message = "") {
   $("#conteudo").innerHTML = `
@@ -768,7 +988,9 @@ function renderAdminLogin(message = "") {
   });
 }
 
-/* FORMULÁRIOS DAS SEÇÕES */
+/* =====================================================
+   FORMULÁRIOS DAS SEÇÕES
+===================================================== */
 
 function collectionForm(type, config) {
   const fields = config.fields.map(([name, label, kind]) => {
@@ -805,25 +1027,26 @@ function collectionForm(type, config) {
         ${fields}
 
         ${type !== "servicos" ? `
-          <label>Imagem</label>
+          <label>Adicionar fotos</label>
           <input type="file" id="${type}Upload"
-            accept="image/png,image/jpeg,image/webp">
+            accept="image/png,image/jpeg,image/webp"
+            multiple>
 
-          <input type="hidden" name="imagem" id="${type}Imagem">
+          <input type="hidden" name="imagensJson" value="[]">
 
           <div id="${type}Preview"></div>
 
-          <label>Como a imagem deve aparecer?</label>
+          <label>Como as fotos devem aparecer?</label>
           <select name="imagemModo">
-            <option value="contain">Mostrar imagem inteira (recomendado)</option>
-            <option value="cover">Preencher espaço (pode cortar)</option>
+            <option value="contain">Mostrar foto inteira, sem cortar</option>
+            <option value="cover">Preencher o espaço, permitindo corte</option>
           </select>
 
-          <label>Altura da imagem em pixels</label>
+          <label>Altura da galeria em pixels</label>
           <input name="imagemAltura" type="number"
             min="100" max="900" value="320">
 
-          <p>Use "imagem inteira" para certificados, prints de sites e imagens que não podem ser cortadas.</p>
+          <p>Você pode selecionar várias fotos. Para ajustar uma foto, arraste-a na prévia. Para remover uma, clique em "Excluir esta foto".</p>
         ` : ""}
 
         <button class="btn" type="submit">
@@ -839,7 +1062,9 @@ function collectionForm(type, config) {
   `;
 }
 
-/* LISTAGEM DOS CONTEÚDOS NO PAINEL */
+/* =====================================================
+   LISTAGEM NO PAINEL
+===================================================== */
 
 function renderAdminCollections() {
   Object.entries(collections).forEach(([type]) => {
@@ -850,35 +1075,24 @@ function renderAdminCollections() {
 
     container.innerHTML = items.map((item, index) => `
       <article class="card" style="margin:15px 0;padding:15px">
-        ${item.imagem ? `
-          <img src="${escapeHTML(item.imagem)}"
-            alt="${escapeHTML(item.titulo)}"
-            style="
-              width:100%;
-              max-width:240px;
-              height:${Math.min(900, Math.max(100, Number(item.imagemAltura) || 320))}px;
-              object-fit:${item.imagemModo === "cover" ? "cover" : "contain"};
-              background:#101010;
-              border-radius:10px;
-            ">
-        ` : ""}
+        ${contentGallery(item, item.titulo)}
 
         <h3>${escapeHTML(item.titulo || "Sem título")}</h3>
         <p>${escapeHTML(item.instituicao || item.categoria || item.data || item.descricao || "")}</p>
 
         <div class="admin-actions">
           <button class="btn" type="button"
-            data-edit="${type}" data-index="${index}">Editar</button>
+            data-edit="${type}" data-id="${escapeHTML(item.id)}">Editar</button>
 
           <button class="btn btn-secondary" type="button"
-            data-delete="${type}" data-index="${index}">Excluir</button>
+            data-delete="${type}" data-id="${escapeHTML(item.id)}">Excluir</button>
 
           ${type === "projetos" ? `
             <button class="btn btn-secondary" type="button"
-              data-move="up" data-index="${index}">↑</button>
+              data-move="up" data-id="${escapeHTML(item.id)}">↑</button>
 
             <button class="btn btn-secondary" type="button"
-              data-move="down" data-index="${index}">↓</button>
+              data-move="down" data-id="${escapeHTML(item.id)}">↓</button>
           ` : ""}
         </div>
       </article>
@@ -886,7 +1100,9 @@ function renderAdminCollections() {
   });
 }
 
-/* REDES SOCIAIS NO PAINEL */
+/* =====================================================
+   CONTATOS NO PAINEL
+===================================================== */
 
 function renderAdminContacts() {
   const container = $("#contatosLista");
@@ -901,26 +1117,22 @@ function renderAdminContacts() {
 
       <p style="word-break:break-all">${escapeHTML(item.url)}</p>
 
-      ${item.principal ? `
-        <p><strong>Contato principal</strong></p>
-      ` : ""}
+      ${item.principal ? "<p><strong>Contato principal</strong></p>" : ""}
 
       <div class="admin-actions">
         <button class="btn" type="button"
-          data-contact-edit="${escapeHTML(item.id)}">
-          Editar
-        </button>
+          data-contact-edit="${escapeHTML(item.id)}">Editar</button>
 
         <button class="btn btn-secondary" type="button"
-          data-contact-delete="${escapeHTML(item.id)}">
-          Excluir
-        </button>
+          data-contact-delete="${escapeHTML(item.id)}">Excluir</button>
       </div>
     </article>
   `).join("") || "<p>Nenhuma rede cadastrada ainda.</p>";
 }
 
-/* PAINEL ADMINISTRATIVO */
+/* =====================================================
+   PAINEL ADMINISTRATIVO
+===================================================== */
 
 function renderAdmin() {
   Object.keys(collections).forEach(type => {
@@ -939,9 +1151,7 @@ function renderAdmin() {
 
         <div class="admin-panel">
           <h2>Minha conta</h2>
-          <button class="btn btn-secondary" id="logoutButton">
-            Sair do painel
-          </button>
+          <button class="btn btn-secondary" id="logoutButton">Sair do painel</button>
         </div>
 
         <div class="admin-panel">
@@ -980,28 +1190,43 @@ function renderAdmin() {
             <input name="foto" id="fotoCaminho" type="hidden"
               value="${escapeHTML(data.foto)}">
 
+            <input name="fotoPosicao" id="fotoPosicao" type="hidden"
+              value="${escapeHTML(data.fotoPosicao)}">
+
             <div id="fotoPreview">
               ${data.foto ? `
-                <img src="${escapeHTML(data.foto)}"
-                  alt="Foto atual"
+                <div class="pp-image-frame"
                   style="
-                    width:${data.fotoLargura}%;
-                    height:${data.fotoAltura}px;
-                    object-fit:${data.fotoModo};
-                    background:#101010;
+                    width:100%;
+                    max-width:320px;
+                    height:300px;
+                    overflow:hidden;
+                    background:#171717;
+                    border-radius:12px;
+                    touch-action:none;
+                    cursor:grab;
                   ">
+                  <img src="${escapeHTML(data.foto)}"
+                    data-position="${escapeHTML(data.fotoPosicao)}"
+                    style="
+                      width:100%;
+                      height:100%;
+                      object-fit:${data.fotoModo};
+                      object-position:${escapeHTML(data.fotoPosicao)};
+                      pointer-events:none;
+                    ">
+                </div>
+                <small>Arraste a foto para ajustar o enquadramento.</small>
               ` : ""}
             </div>
 
             <label>Largura da foto (%)</label>
             <input name="fotoLargura" type="number"
-              min="30" max="100"
-              value="${data.fotoLargura}">
+              min="30" max="100" value="${data.fotoLargura}">
 
             <label>Altura da foto (pixels)</label>
             <input name="fotoAltura" type="number"
-              min="100" max="900"
-              value="${data.fotoAltura}">
+              min="100" max="900" value="${data.fotoAltura}">
 
             <label>Enquadramento da foto</label>
             <select name="fotoModo">
@@ -1012,8 +1237,6 @@ function renderAdmin() {
                 Preencher espaço
               </option>
             </select>
-
-            <p>Escolha "mostrar foto inteira" para evitar cortes.</p>
 
             <button class="btn" type="submit">Salvar perfil</button>
           </form>
@@ -1061,14 +1284,10 @@ function renderAdmin() {
               Definir como contato principal
             </label>
 
-            <button class="btn" type="submit">
-              Salvar contato
-            </button>
+            <button class="btn" type="submit">Salvar contato</button>
 
             <button class="btn btn-secondary" type="button"
-              id="cancelarContato">
-              Cancelar edição
-            </button>
+              id="cancelarContato">Cancelar edição</button>
           </form>
 
           <div id="contatosLista"></div>
@@ -1098,7 +1317,7 @@ function renderAdmin() {
     </section>
   `;
 
-  /* SAIR DO PAINEL */
+  /* SAIR */
 
   $("#logoutButton").addEventListener("click", async () => {
     const { error } = await supabaseClient.auth.signOut();
@@ -1111,7 +1330,65 @@ function renderAdmin() {
     renderAdminLogin("Você saiu do painel.");
   });
 
-  /* FOTO DO PERFIL */
+  /* AJUSTE MANUAL DA FOTO DO PERFIL */
+
+  function attachProfileDragging() {
+    const frame = $("#fotoPreview .pp-image-frame");
+    if (!frame) return;
+
+    const image = frame.querySelector("img");
+    let startX = 0;
+    let startY = 0;
+    let originX = 50;
+    let originY = 50;
+    let dragging = false;
+
+    const values = String(data.fotoPosicao || "50% 50%")
+      .split(" ")
+      .map(value => Number(value.replace("%", "")));
+
+    originX = values[0] || 50;
+    originY = values[1] || 50;
+
+    frame.addEventListener("pointerdown", event => {
+      dragging = true;
+      startX = event.clientX;
+      startY = event.clientY;
+      frame.setPointerCapture(event.pointerId);
+    });
+
+    frame.addEventListener("pointermove", event => {
+      if (!dragging) return;
+
+      const rect = frame.getBoundingClientRect();
+      const x = Math.max(0, Math.min(100,
+        originX - ((event.clientX - startX) / rect.width * 100)
+      ));
+      const y = Math.max(0, Math.min(100,
+        originY - ((event.clientY - startY) / rect.height * 100)
+      ));
+
+      const position = `${x}% ${y}%`;
+
+      image.style.objectPosition = position;
+      image.dataset.position = position;
+      $("#fotoPosicao").value = position;
+    });
+
+    const stop = () => {
+      if (!dragging) return;
+      dragging = false;
+
+      const values = image.dataset.position.split(" ");
+      originX = Number(values[0].replace("%", "")) || 50;
+      originY = Number(values[1].replace("%", "")) || 50;
+    };
+
+    frame.addEventListener("pointerup", stop);
+    frame.addEventListener("pointercancel", stop);
+  }
+
+  attachProfileDragging();
 
   $("#fotoUpload").addEventListener("change", async event => {
     const file = event.target.files[0];
@@ -1121,21 +1398,34 @@ function renderAdmin() {
 
     if (url) {
       $("#fotoCaminho").value = url;
+      $("#fotoPosicao").value = "50% 50%";
 
       $("#fotoPreview").innerHTML = `
-        <img src="${escapeHTML(url)}"
-          alt="Prévia da foto"
+        <div class="pp-image-frame"
           style="
             width:100%;
-            max-width:100%;
+            max-width:320px;
             height:300px;
-            object-fit:contain;
-            background:#101010;
+            overflow:hidden;
+            background:#171717;
             border-radius:12px;
+            touch-action:none;
+            cursor:grab;
           ">
+          <img src="${escapeHTML(url)}"
+            data-position="50% 50%"
+            style="
+              width:100%;
+              height:100%;
+              object-fit:cover;
+              object-position:50% 50%;
+              pointer-events:none;
+            ">
+        </div>
+        <small>Arraste a foto para ajustar o enquadramento.</small>
       `;
 
-      alert("Foto enviada! Ajuste o tamanho e clique em Salvar perfil.");
+      attachProfileDragging();
     }
   });
 
@@ -1155,6 +1445,7 @@ function renderAdmin() {
     data.cidade = form.get("cidade");
     data.aniversario = form.get("aniversario");
     data.foto = form.get("foto");
+    data.fotoPosicao = form.get("fotoPosicao") || "50% 50%";
 
     data.fotoLargura = Math.min(100, Math.max(30, Number(form.get("fotoLargura")) || 100));
     data.fotoAltura = Math.min(900, Math.max(100, Number(form.get("fotoAltura")) || 440));
@@ -1165,7 +1456,7 @@ function renderAdmin() {
     }
   });
 
-  /* ENVIAR E SALVAR LOGO */
+  /* LOGO */
 
   $("#logoUpload").addEventListener("change", async event => {
     const file = event.target.files[0];
@@ -1180,8 +1471,6 @@ function renderAdmin() {
         <img src="${escapeHTML(url)}" alt="Prévia da nova logo"
           style="width:160px;max-height:120px;object-fit:contain">
       `;
-
-      alert("Logo enviada! Agora clique em Salvar nova logo.");
     }
   });
 
@@ -1197,7 +1486,7 @@ function renderAdmin() {
     }
   });
 
-  /* CADASTRAR, EDITAR E EXCLUIR REDES SOCIAIS */
+  /* CONTATOS */
 
   $("#contatosForm").addEventListener("submit", async event => {
     event.preventDefault();
@@ -1213,16 +1502,14 @@ function renderAdmin() {
       return;
     }
 
+    const previous = JSON.parse(JSON.stringify(data.contatos));
+
     if (principal) {
-      data.contatos.forEach(item => {
-        item.principal = false;
-      });
+      data.contatos.forEach(item => item.principal = false);
     }
 
     if (contatoId) {
-      const index = data.contatos.findIndex(item =>
-        item.id === contatoId
-      );
+      const index = data.contatos.findIndex(item => item.id === contatoId);
 
       if (index !== -1) {
         data.contatos[index] = {
@@ -1234,20 +1521,21 @@ function renderAdmin() {
       }
     } else {
       data.contatos.push({
-        id: crypto.randomUUID(),
+        id: newId(),
         nome,
         url,
-        principal
+        principal: principal || data.contatos.length === 0
       });
     }
 
     if (await saveData()) {
       event.target.reset();
       event.target.elements.namedItem("contatoId").value = "";
-
       renderAdminContacts();
       renderFooter();
       alert("Contato salvo na nuvem!");
+    } else {
+      data.contatos = previous;
     }
   });
 
@@ -1256,45 +1544,62 @@ function renderAdmin() {
     $("#contatosForm").elements.namedItem("contatoId").value = "";
   });
 
-  /* CADASTRO, EDIÇÃO E IMAGENS DAS SEÇÕES */
+  /* FORMULÁRIOS DE CONTEÚDO */
 
   Object.entries(collections).forEach(([type, config]) => {
     const formElement = document.getElementById(type + "Form");
 
+    let images = [];
+
     if (type !== "servicos") {
+      const preview = document.getElementById(type + "Preview");
+      const hiddenImages = formElement.elements.namedItem("imagensJson");
+
+      const updateImages = () => {
+        hiddenImages.value = JSON.stringify(images);
+        renderImagePreviews(
+          preview,
+          images,
+          formElement.elements.namedItem("imagemModo").value
+        );
+        attachImageDragging(preview, images, updateImages);
+      };
+
       document.getElementById(type + "Upload")
         .addEventListener("change", async event => {
-          const file = event.target.files[0];
-          if (!file) return;
+          const files = Array.from(event.target.files || []);
+          if (!files.length) return;
 
-          const url = await uploadImage(file);
+          for (const file of files) {
+            const url = await uploadImage(file);
 
-          if (url) {
-            document.getElementById(type + "Imagem").value = url;
-
-            document.getElementById(type + "Preview").innerHTML = `
-              <img src="${escapeHTML(url)}"
-                alt="Prévia da imagem"
-                style="
-                  width:100%;
-                  max-width:260px;
-                  height:300px;
-                  object-fit:contain;
-                  background:#101010;
-                  border-radius:10px;
-                ">
-            `;
-
-            alert("Imagem enviada! Escolha o enquadramento e salve o conteúdo.");
+            if (url) {
+              images.push({
+                url,
+                posicao: "50% 50%"
+              });
+            }
           }
+
+          updateImages();
+          event.target.value = "";
         });
+
+      formElement.elements.namedItem("imagemModo")
+        .addEventListener("change", updateImages);
+
+      formElement.addEventListener("reset", () => {
+        images = [];
+        hiddenImages.value = "[]";
+        preview.innerHTML = "";
+      });
     }
 
     formElement.addEventListener("submit", async event => {
       event.preventDefault();
 
       const form = new FormData(formElement);
-      const itemId = form.get("itemId");
+      const itemId = String(form.get("itemId") || "");
       const item = {};
 
       config.fields.forEach(([name, label, kind]) => {
@@ -1304,57 +1609,103 @@ function renderAdmin() {
       });
 
       if (type !== "servicos") {
-        item.imagem = form.get("imagem") || "";
+        try {
+          images = JSON.parse(form.get("imagensJson") || "[]");
+        } catch {
+          images = [];
+        }
+
+        item.imagens = images;
+        item.imagem = images[0]?.url || "";
+        item.imagemPosicao = images[0]?.posicao || "50% 50%";
         item.imagemModo = form.get("imagemModo") === "cover" ? "cover" : "contain";
         item.imagemAltura = Math.min(900, Math.max(100, Number(form.get("imagemAltura")) || 320));
       }
 
+      const previous = JSON.parse(JSON.stringify(data[type]));
+
       if (itemId) {
-        const index = data[type].findIndex(entry => entry.id === itemId);
+        const index = data[type].findIndex(entry => String(entry.id) === itemId);
 
-        if (index !== -1) {
-          item.id = itemId;
-
-          if (type === "servicos") {
-            item.imagem = data[type][index].imagem || "";
-          }
-
-          data[type][index] = item;
+        if (index === -1) {
+          alert("Não encontrei o conteúdo original para editar. Atualize o painel e tente novamente.");
+          return;
         }
+
+        item.id = data[type][index].id;
+
+        if (type === "servicos") {
+          item.imagens = data[type][index].imagens || [];
+          item.imagem = data[type][index].imagem || "";
+        }
+
+        data[type][index] = item;
       } else {
-        item.id = crypto.randomUUID();
+        item.id = newId();
+
+        if (type === "servicos") {
+          item.imagens = [];
+          item.imagem = "";
+        }
+
         data[type].push(item);
       }
 
       if (await saveData()) {
         formElement.reset();
+        formElement.elements.namedItem("itemId").value = "";
+        images = [];
 
         if (type !== "servicos") {
-          document.getElementById(type + "Imagem").value = "";
+          formElement.elements.namedItem("imagensJson").value = "[]";
           document.getElementById(type + "Preview").innerHTML = "";
-          formElement.elements.namedItem("imagemAltura").value = 320;
-          formElement.elements.namedItem("imagemModo").value = "contain";
         }
 
         renderAdminCollections();
         alert(`${config.title} salvo na nuvem!`);
+      } else {
+        data[type] = previous;
       }
     });
 
     document.querySelector(`[data-cancel="${type}"]`)
       .addEventListener("click", () => {
         formElement.reset();
+        formElement.elements.namedItem("itemId").value = "";
+        images = [];
 
         if (type !== "servicos") {
-          document.getElementById(type + "Imagem").value = "";
+          formElement.elements.namedItem("imagensJson").value = "[]";
           document.getElementById(type + "Preview").innerHTML = "";
-          formElement.elements.namedItem("imagemAltura").value = 320;
-          formElement.elements.namedItem("imagemModo").value = "contain";
         }
       });
+
+    /* Guardar a galeria atual para carregar ao editar */
+    formElement._setImages = newImages => {
+      images = newImages;
+      if (type !== "servicos") {
+        formElement.elements.namedItem("imagensJson").value =
+          JSON.stringify(images);
+
+        const preview = document.getElementById(type + "Preview");
+
+        renderImagePreviews(
+          preview,
+          images,
+          formElement.elements.namedItem("imagemModo").value
+        );
+
+        attachImageDragging(preview, images, () => {
+          formElement.elements.namedItem("imagensJson").value =
+            JSON.stringify(images);
+        });
+      }
+    };
   });
 
-  /* BOTÕES DE EDITAR, EXCLUIR E REORDENAR */
+  /* ===================================================
+     EDITAR, EXCLUIR E REORDENAR
+  =================================================== */
 
   $("#conteudo").addEventListener("click", async event => {
     const contactEditButton = event.target.closest("[data-contact-edit]");
@@ -1390,17 +1741,17 @@ function renderAdmin() {
       const index = data.contatos.findIndex(item => item.id === id);
 
       if (index === -1) return;
-
       if (!confirm("Deseja excluir este contato?")) return;
 
-      const removed = data.contatos.splice(index, 1);
+      const previous = JSON.parse(JSON.stringify(data.contatos));
+      data.contatos.splice(index, 1);
 
       if (await saveData()) {
         renderAdminContacts();
         renderFooter();
         alert("Contato excluído!");
       } else {
-        data.contatos.splice(index, 0, removed[0]);
+        data.contatos = previous;
       }
 
       return;
@@ -1410,19 +1761,28 @@ function renderAdmin() {
 
     if (editButton) {
       const type = editButton.dataset.edit;
-      const index = Number(editButton.dataset.index);
-      const item = data[type][index];
+      const id = editButton.dataset.id;
+      const item = data[type].find(entry => String(entry.id) === String(id));
+
+      if (!item) {
+        alert("Não encontrei esse conteúdo. Atualize o painel e tente novamente.");
+        return;
+      }
+
       const form = document.getElementById(type + "Form");
 
       form.reset();
 
+      /* CORREÇÃO PRINCIPAL: preencher o ID do item original */
+      form.elements.namedItem("itemId").value = String(item.id);
+
       Object.entries(item).forEach(([key, value]) => {
         const field = form.elements.namedItem(key);
-        if (!field) return;
+        if (!field || key === "id") return;
 
         if (field.type === "checkbox") {
           field.checked = Boolean(value);
-        } else {
+        } else if (key !== "imagens") {
           field.value = value ?? "";
         }
       });
@@ -1431,21 +1791,7 @@ function renderAdmin() {
         form.elements.namedItem("imagemModo").value = item.imagemModo || "contain";
         form.elements.namedItem("imagemAltura").value = item.imagemAltura || 320;
 
-        document.getElementById(type + "Preview").innerHTML =
-          item.imagem
-            ? `
-              <img src="${escapeHTML(item.imagem)}"
-                alt="Imagem atual"
-                style="
-                  width:100%;
-                  max-width:260px;
-                  height:300px;
-                  object-fit:contain;
-                  background:#101010;
-                  border-radius:10px;
-                ">
-            `
-            : "";
+        form._setImages(getImages(item));
       }
 
       form.scrollIntoView({ behavior: "smooth" });
@@ -1456,17 +1802,20 @@ function renderAdmin() {
 
     if (deleteButton) {
       const type = deleteButton.dataset.delete;
-      const index = Number(deleteButton.dataset.index);
+      const id = deleteButton.dataset.id;
+      const index = data[type].findIndex(item => String(item.id) === String(id));
 
+      if (index === -1) return;
       if (!confirm("Deseja excluir este conteúdo?")) return;
 
-      const removed = data[type].splice(index, 1);
+      const previous = JSON.parse(JSON.stringify(data[type]));
+      data[type].splice(index, 1);
 
       if (await saveData()) {
         renderAdminCollections();
         alert("Conteúdo excluído!");
       } else {
-        data[type].splice(index, 0, removed[0]);
+        data[type] = previous;
       }
 
       return;
@@ -1475,24 +1824,25 @@ function renderAdmin() {
     /* REORDENAR PROJETOS */
 
     if (moveButton) {
-      const index = Number(moveButton.dataset.index);
+      const id = moveButton.dataset.id;
+      const index = data.projetos.findIndex(item => String(item.id) === String(id));
       const direction = moveButton.dataset.move;
-      const projects = data.projetos;
 
       const newIndex = direction === "up"
         ? index - 1
         : index + 1;
 
-      if (newIndex < 0 || newIndex >= projects.length) return;
+      if (index < 0 || newIndex < 0 || newIndex >= data.projetos.length) return;
 
-      [projects[index], projects[newIndex]] =
-        [projects[newIndex], projects[index]];
+      const previous = JSON.parse(JSON.stringify(data.projetos));
+
+      [data.projetos[index], data.projetos[newIndex]] =
+        [data.projetos[newIndex], data.projetos[index]];
 
       if (await saveData()) {
         renderAdminCollections();
       } else {
-        [projects[index], projects[newIndex]] =
-          [projects[newIndex], projects[index]];
+        data.projetos = previous;
       }
     }
   });
@@ -1540,7 +1890,9 @@ function renderAdmin() {
   renderAdminContacts();
 }
 
-/* INICIALIZAÇÃO DO SITE */
+/* =====================================================
+   INICIALIZAÇÃO
+===================================================== */
 
 async function start() {
   await loadPortfolioData();
