@@ -1,3 +1,4 @@
+
 const $ = selector => document.querySelector(selector);
 
 const page = document.body.dataset.page || "inicio";
@@ -130,7 +131,9 @@ function completeData(source) {
 
     result[key] = result[key].map((item, index) => ({
       ...item,
-      id: item.id || `inicial-${key}-${index}`
+      id: item.id || `inicial-${key}-${index}`,
+      imagemModo: item.imagemModo || "contain",
+      imagemAltura: Number(item.imagemAltura) || 320
     }));
   });
 
@@ -142,6 +145,10 @@ function completeData(source) {
     ...item,
     id: item.id || `contato-${index}`
   }));
+
+  result.fotoLargura = Number(result.fotoLargura) || 100;
+  result.fotoAltura = Number(result.fotoAltura) || 440;
+  result.fotoModo = result.fotoModo || "contain";
 
   return result;
 }
@@ -194,13 +201,25 @@ async function saveData() {
   }
 }
 
-/* CABEÇALHO E RODAPÉ */
+/* BOTÃO VOLTAR */
+
+function backButton(destination = "index.html") {
+  return `
+    <button class="back-button" type="button"
+      onclick="if (history.length > 1) { history.back(); } else { location.href='${destination}'; }">
+      ← Voltar
+    </button>
+  `;
+}
+
+/* TÍTULOS DAS PÁGINAS */
 
 function heading(title, description) {
   return `
     <section class="page-heading">
       <div class="container">
-        <span class="eyebrow">Paola Pereira</span>
+        ${backButton()}
+        <span class="eyebrow">PP Studio</span>
         <h1>${escapeHTML(title)}</h1>
         <p>${escapeHTML(description)}</p>
       </div>
@@ -208,42 +227,76 @@ function heading(title, description) {
   `;
 }
 
-/* CABEÇALHO COM LOGO REDIMENSIONADA */
+/* ÍCONES DAS REDES SOCIAIS */
+
+function socialIcon(name) {
+  const key = String(name || "").toLowerCase();
+
+  const icons = {
+    instagram: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="5"
+          fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="4"
+          fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="18" cy="6" r="1.3" fill="currentColor"/>
+      </svg>
+    `,
+    whatsapp: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"
+          fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 8.5c.4 2.3 2.2 4.1 4.5 4.8l1.3-1.1 2 1"
+          fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round"/>
+      </svg>
+    `,
+    linkedin: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 9v10M5 5v.1M10 19v-6a3 3 0 0 1 6 0v6M10 10v9"
+          fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round"/>
+      </svg>
+    `,
+    tiktok: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14 4v10.5a4 4 0 1 1-4-4"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round"/>
+        <path d="M14 4c.5 3 2.3 4.7 5 5"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round"/>
+      </svg>
+    `,
+    github: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 19c-4.5 1.5-4.5-2.5-6-3m12 6v-3.9a3.4 3.4 0 0 0-.9-2.7c3-.3 6.1-1.5 6.1-6.6a5.1 5.1 0 0 0-1.4-3.5 4.7 4.7 0 0 0-.1-3.5s-1.2-.4-3.7 1.4a12.8 12.8 0 0 0-6.7 0C5.8 1.4 4.6 1.8 4.6 1.8a4.7 4.7 0 0 0-.1 3.5A5.1 5.1 0 0 0 3.1 8.8c0 5.1 3.1 6.3 6.1 6.6a3.4 3.4 0 0 0-.9 2.7V22"
+          fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `
+  };
+
+  const found = Object.keys(icons).find(item => key.includes(item));
+
+  return found
+    ? icons[found]
+    : `<span>${escapeHTML(String(name || "?").charAt(0).toUpperCase())}</span>`;
+}
+
+/* CABEÇALHO E RODAPÉ */
 
 function renderHeader() {
   const logoAtual = data.logo || "./imagem/Logo-pp.png";
 
   $("#header").innerHTML = `
     <div class="container navbar">
-      <a class="logo" href="index.html"
-        style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          flex-shrink:0;
-          max-width:100%;
-          text-decoration:none;
-        ">
-
-        <img
-          src="${escapeHTML(logoAtual)}"
+      <a class="logo" href="index.html">
+        <img src="${escapeHTML(logoAtual)}"
           alt="Logo PP Studio"
-          style="
-            width:45px !important;
-            height:45px !important;
-            max-width:45px !important;
-            max-height:45px !important;
-            min-width:45px;
-            object-fit:contain;
-            display:block;
-            flex-shrink:0;
-          "
-          onerror="this.style.display='none'"
-        >
-
-        <span style="white-space:nowrap;">
-          PP Studio | Paola Pereira
-        </span>
+          onerror="this.style.display='none'">
+        <span>PP Studio | Paola Pereira</span>
       </a>
 
       <button class="menu-button" id="menuButton"
@@ -263,11 +316,52 @@ function renderHeader() {
 }
 
 function renderFooter() {
+  const contacts = data.contatos || [];
+
   $("#footer").innerHTML = `
     <div class="container">
+      <div class="social-links">
+        ${contacts.filter(item => safeURL(item.url)).map(item => `
+          <a class="social-link"
+            href="${safeURL(item.url)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="${escapeHTML(item.nome)}">
+            <span class="social-icon">${socialIcon(item.nome)}</span>
+            <span>${escapeHTML(item.nome)}</span>
+          </a>
+        `).join("")}
+      </div>
+
       <p>© ${new Date().getFullYear()} ${escapeHTML(data.nome)}. Todos os direitos reservados.</p>
       <p>Feito com criatividade, tecnologia e propósito.</p>
     </div>
+  `;
+}
+
+/* ESTILO DAS IMAGENS DO CONTEÚDO */
+
+function contentImage(item, alt = "") {
+  if (!item.imagem) return "";
+
+  const modo = item.imagemModo === "cover" ? "cover" : "contain";
+  const altura = Math.min(900, Math.max(100, Number(item.imagemAltura) || 320));
+
+  return `
+    <img
+      src="${escapeHTML(item.imagem)}"
+      alt="${escapeHTML(alt || item.titulo || "Imagem do portfólio")}"
+      style="
+        width:100%;
+        height:${altura}px;
+        max-height:none;
+        object-fit:${modo};
+        object-position:center;
+        background:#101010;
+        border-radius:10px;
+        display:block;
+      "
+      onerror="this.style.display='none'">
   `;
 }
 
@@ -278,11 +372,7 @@ function projectCard(project) {
 
   return `
     <article class="card">
-      ${project.imagem ? `
-        <img src="${escapeHTML(project.imagem)}"
-             alt="${escapeHTML(project.titulo)}"
-             onerror="this.style.display='none'">
-      ` : ""}
+      ${contentImage(project, project.titulo)}
 
       <span class="tag">${escapeHTML(project.categoria || "Projeto")}</span>
       <h3>${escapeHTML(project.titulo)}</h3>
@@ -290,7 +380,7 @@ function projectCard(project) {
 
       ${link ? `
         <a class="btn" href="${link}"
-           target="_blank" rel="noopener">Ver projeto</a>
+          target="_blank" rel="noopener">Ver projeto</a>
       ` : ""}
     </article>
   `;
@@ -299,6 +389,10 @@ function projectCard(project) {
 /* PÁGINA INICIAL */
 
 function renderHome() {
+  const largura = Math.min(100, Math.max(30, Number(data.fotoLargura) || 100));
+  const altura = Math.min(900, Math.max(100, Number(data.fotoAltura) || 440));
+  const modo = data.fotoModo === "cover" ? "cover" : "contain";
+
   $("#conteudo").innerHTML = `
     <section class="hero">
       <div class="container hero-content">
@@ -310,11 +404,19 @@ function renderHome() {
           <a href="sobre.html" class="btn btn-secondary">Sobre mim</a>
         </div>
 
-        <div>
+        <div style="display:flex;justify-content:center">
           ${data.foto ? `
-            <img class="hero-image" src="${escapeHTML(data.foto)}"
-                 alt="Foto de ${escapeHTML(data.nome)}"
-                 onerror="this.style.display='none'">
+            <img class="hero-image"
+              src="${escapeHTML(data.foto)}"
+              alt="Foto de ${escapeHTML(data.nome)}"
+              style="
+                width:${largura}%;
+                height:${altura}px;
+                max-height:none;
+                object-fit:${modo};
+                object-position:center;
+              "
+              onerror="this.style.display='none'">
           ` : ""}
         </div>
       </div>
@@ -350,14 +452,26 @@ function renderAbout() {
       today.getDate() < birthday.getDate())
   ) age--;
 
+  const largura = Math.min(100, Math.max(30, Number(data.fotoLargura) || 100));
+  const altura = Math.min(900, Math.max(100, Number(data.fotoAltura) || 440));
+  const modo = data.fotoModo === "cover" ? "cover" : "contain";
+
   $("#conteudo").innerHTML = `
     ${heading("Sobre mim", "Um pouco da minha história, formação e trajetória.")}
 
     <section class="section">
       <div class="container about-layout">
         ${data.foto ? `
-          <img class="hero-image" src="${escapeHTML(data.foto)}"
-               alt="Paola Pereira">
+          <img class="hero-image"
+            src="${escapeHTML(data.foto)}"
+            alt="Paola Pereira"
+            style="
+              width:${largura}%;
+              height:${altura}px;
+              max-height:none;
+              object-fit:${modo};
+              object-position:center;
+            ">
         ` : ""}
 
         <div>
@@ -435,10 +549,7 @@ function renderCertificates() {
       <div class="container grid">
         ${data.certificados.length ? data.certificados.map(item => `
           <article class="card">
-            ${item.imagem ? `
-              <img src="${escapeHTML(item.imagem)}"
-                   alt="Certificado ${escapeHTML(item.titulo)}">
-            ` : ""}
+            ${contentImage(item, "Certificado " + item.titulo)}
 
             <h3>${escapeHTML(item.titulo)}</h3>
             <p>${escapeHTML(item.instituicao || "")}</p>
@@ -446,7 +557,7 @@ function renderCertificates() {
 
             ${safeURL(item.link) ? `
               <a class="btn" href="${safeURL(item.link)}"
-                 target="_blank" rel="noopener">Ver certificado</a>
+                target="_blank" rel="noopener">Ver certificado</a>
             ` : ""}
           </article>
         `).join("") : "<p>Os certificados serão adicionados em breve.</p>"}
@@ -465,10 +576,7 @@ function renderEvents() {
       <div class="container grid">
         ${data.eventos.length ? data.eventos.map(item => `
           <article class="card">
-            ${item.imagem ? `
-              <img src="${escapeHTML(item.imagem)}"
-                   alt="${escapeHTML(item.titulo)}">
-            ` : ""}
+            ${contentImage(item, item.titulo)}
 
             <h3>${escapeHTML(item.titulo)}</h3>
             <p>${escapeHTML(item.data || "")}</p>
@@ -491,10 +599,7 @@ function renderDiary() {
       <div class="container">
         ${data.diario.map(item => `
           <article class="card" style="margin-bottom:20px">
-            ${item.imagem ? `
-              <img src="${escapeHTML(item.imagem)}"
-                   alt="${escapeHTML(item.titulo)}">
-            ` : ""}
+            ${contentImage(item, item.titulo)}
 
             <span class="eyebrow">${escapeHTML(item.data || "")}</span>
             <h3>${escapeHTML(item.titulo)}</h3>
@@ -526,14 +631,15 @@ function renderContact() {
 
         <div class="card">
           <span class="eyebrow">Contato principal</span>
-          <h2>Vamos conversar pelo WhatsApp?</h2>
+          <h2>Vamos conversar?</h2>
           <p>Para projetos, parcerias ou oportunidades, será um prazer conversar com você.</p>
 
           ${whatsapp ? `
             <a class="btn"
-               href="${safeURL(whatsapp.url)}"
-               target="_blank"
-               rel="noopener noreferrer">
+              href="${safeURL(whatsapp.url)}"
+              target="_blank"
+              rel="noopener noreferrer">
+              ${socialIcon("WhatsApp")}
               Conversar pelo WhatsApp
             </a>
           ` : `
@@ -542,22 +648,20 @@ function renderContact() {
         </div>
 
         ${otherContacts.length ? `
-          <div class="section-title" style="margin-top:40px">
+          <div class="section-title" style="margin-top:45px">
             <span class="eyebrow">Me encontre também</span>
             <h2>Minhas redes</h2>
           </div>
 
-          <div class="grid">
+          <div class="social-links">
             ${otherContacts.map(item => `
-              <article class="card">
-                <h3>${escapeHTML(item.nome)}</h3>
-                <a class="btn"
-                   href="${safeURL(item.url)}"
-                   target="_blank"
-                   rel="noopener noreferrer">
-                  Acessar ${escapeHTML(item.nome)}
-                </a>
-              </article>
+              <a class="social-link"
+                href="${safeURL(item.url)}"
+                target="_blank"
+                rel="noopener noreferrer">
+                <span class="social-icon">${socialIcon(item.nome)}</span>
+                <span>${escapeHTML(item.nome)}</span>
+              </a>
             `).join("")}
           </div>
         ` : ""}
@@ -708,6 +812,18 @@ function collectionForm(type, config) {
           <input type="hidden" name="imagem" id="${type}Imagem">
 
           <div id="${type}Preview"></div>
+
+          <label>Como a imagem deve aparecer?</label>
+          <select name="imagemModo">
+            <option value="contain">Mostrar imagem inteira (recomendado)</option>
+            <option value="cover">Preencher espaço (pode cortar)</option>
+          </select>
+
+          <label>Altura da imagem em pixels</label>
+          <input name="imagemAltura" type="number"
+            min="100" max="900" value="320">
+
+          <p>Use "imagem inteira" para certificados, prints de sites e imagens que não podem ser cortadas.</p>
         ` : ""}
 
         <button class="btn" type="submit">
@@ -736,8 +852,15 @@ function renderAdminCollections() {
       <article class="card" style="margin:15px 0;padding:15px">
         ${item.imagem ? `
           <img src="${escapeHTML(item.imagem)}"
-               alt="${escapeHTML(item.titulo)}"
-               style="width:100%;max-width:180px;border-radius:10px">
+            alt="${escapeHTML(item.titulo)}"
+            style="
+              width:100%;
+              max-width:240px;
+              height:${Math.min(900, Math.max(100, Number(item.imagemAltura) || 320))}px;
+              object-fit:${item.imagemModo === "cover" ? "cover" : "contain"};
+              background:#101010;
+              border-radius:10px;
+            ">
         ` : ""}
 
         <h3>${escapeHTML(item.titulo || "Sem título")}</h3>
@@ -771,7 +894,11 @@ function renderAdminContacts() {
 
   container.innerHTML = data.contatos.map(item => `
     <article class="card" style="margin:15px 0;padding:15px">
-      <h3>${escapeHTML(item.nome)}</h3>
+      <div class="social-links">
+        <span class="social-icon">${socialIcon(item.nome)}</span>
+        <h3>${escapeHTML(item.nome)}</h3>
+      </div>
+
       <p style="word-break:break-all">${escapeHTML(item.url)}</p>
 
       ${item.principal ? `
@@ -856,10 +983,37 @@ function renderAdmin() {
             <div id="fotoPreview">
               ${data.foto ? `
                 <img src="${escapeHTML(data.foto)}"
-                     alt="Foto atual"
-                     style="width:130px;border-radius:12px">
+                  alt="Foto atual"
+                  style="
+                    width:${data.fotoLargura}%;
+                    height:${data.fotoAltura}px;
+                    object-fit:${data.fotoModo};
+                    background:#101010;
+                  ">
               ` : ""}
             </div>
+
+            <label>Largura da foto (%)</label>
+            <input name="fotoLargura" type="number"
+              min="30" max="100"
+              value="${data.fotoLargura}">
+
+            <label>Altura da foto (pixels)</label>
+            <input name="fotoAltura" type="number"
+              min="100" max="900"
+              value="${data.fotoAltura}">
+
+            <label>Enquadramento da foto</label>
+            <select name="fotoModo">
+              <option value="contain" ${data.fotoModo === "contain" ? "selected" : ""}>
+                Mostrar foto inteira
+              </option>
+              <option value="cover" ${data.fotoModo === "cover" ? "selected" : ""}>
+                Preencher espaço
+              </option>
+            </select>
+
+            <p>Escolha "mostrar foto inteira" para evitar cortes.</p>
 
             <button class="btn" type="submit">Salvar perfil</button>
           </form>
@@ -879,8 +1033,8 @@ function renderAdmin() {
 
             <div id="logoPreview">
               <img src="${escapeHTML(data.logo || "./imagem/Logo-pp.png")}"
-                   alt="Logo atual do PP Studio"
-                   style="width:160px;max-height:120px;object-fit:contain;border-radius:10px">
+                alt="Logo atual do PP Studio"
+                style="width:160px;max-height:120px;object-fit:contain">
             </div>
 
             <button class="btn" type="submit">Salvar nova logo</button>
@@ -969,11 +1123,19 @@ function renderAdmin() {
       $("#fotoCaminho").value = url;
 
       $("#fotoPreview").innerHTML = `
-        <img src="${escapeHTML(url)}" alt="Prévia da foto"
-             style="width:130px;border-radius:12px">
+        <img src="${escapeHTML(url)}"
+          alt="Prévia da foto"
+          style="
+            width:100%;
+            max-width:100%;
+            height:300px;
+            object-fit:contain;
+            background:#101010;
+            border-radius:12px;
+          ">
       `;
 
-      alert("Foto enviada! Agora clique em Salvar perfil.");
+      alert("Foto enviada! Ajuste o tamanho e clique em Salvar perfil.");
     }
   });
 
@@ -994,6 +1156,10 @@ function renderAdmin() {
     data.aniversario = form.get("aniversario");
     data.foto = form.get("foto");
 
+    data.fotoLargura = Math.min(100, Math.max(30, Number(form.get("fotoLargura")) || 100));
+    data.fotoAltura = Math.min(900, Math.max(100, Number(form.get("fotoAltura")) || 440));
+    data.fotoModo = form.get("fotoModo") === "cover" ? "cover" : "contain";
+
     if (await saveData()) {
       alert("Perfil salvo na nuvem!");
     }
@@ -1012,7 +1178,7 @@ function renderAdmin() {
 
       $("#logoPreview").innerHTML = `
         <img src="${escapeHTML(url)}" alt="Prévia da nova logo"
-             style="width:160px;max-height:120px;object-fit:contain;border-radius:10px">
+          style="width:160px;max-height:120px;object-fit:contain">
       `;
 
       alert("Logo enviada! Agora clique em Salvar nova logo.");
@@ -1080,6 +1246,7 @@ function renderAdmin() {
       event.target.elements.namedItem("contatoId").value = "";
 
       renderAdminContacts();
+      renderFooter();
       alert("Contato salvo na nuvem!");
     }
   });
@@ -1106,11 +1273,19 @@ function renderAdmin() {
             document.getElementById(type + "Imagem").value = url;
 
             document.getElementById(type + "Preview").innerHTML = `
-              <img src="${escapeHTML(url)}" alt="Prévia da imagem"
-                   style="width:150px;border-radius:10px">
+              <img src="${escapeHTML(url)}"
+                alt="Prévia da imagem"
+                style="
+                  width:100%;
+                  max-width:260px;
+                  height:300px;
+                  object-fit:contain;
+                  background:#101010;
+                  border-radius:10px;
+                ">
             `;
 
-            alert("Imagem enviada! Agora salve o conteúdo.");
+            alert("Imagem enviada! Escolha o enquadramento e salve o conteúdo.");
           }
         });
     }
@@ -1130,6 +1305,8 @@ function renderAdmin() {
 
       if (type !== "servicos") {
         item.imagem = form.get("imagem") || "";
+        item.imagemModo = form.get("imagemModo") === "cover" ? "cover" : "contain";
+        item.imagemAltura = Math.min(900, Math.max(100, Number(form.get("imagemAltura")) || 320));
       }
 
       if (itemId) {
@@ -1155,6 +1332,8 @@ function renderAdmin() {
         if (type !== "servicos") {
           document.getElementById(type + "Imagem").value = "";
           document.getElementById(type + "Preview").innerHTML = "";
+          formElement.elements.namedItem("imagemAltura").value = 320;
+          formElement.elements.namedItem("imagemModo").value = "contain";
         }
 
         renderAdminCollections();
@@ -1169,6 +1348,8 @@ function renderAdmin() {
         if (type !== "servicos") {
           document.getElementById(type + "Imagem").value = "";
           document.getElementById(type + "Preview").innerHTML = "";
+          formElement.elements.namedItem("imagemAltura").value = 320;
+          formElement.elements.namedItem("imagemModo").value = "contain";
         }
       });
   });
@@ -1216,6 +1397,7 @@ function renderAdmin() {
 
       if (await saveData()) {
         renderAdminContacts();
+        renderFooter();
         alert("Contato excluído!");
       } else {
         data.contatos.splice(index, 0, removed[0]);
@@ -1223,6 +1405,8 @@ function renderAdmin() {
 
       return;
     }
+
+    /* EDITAR ITEM */
 
     if (editButton) {
       const type = editButton.dataset.edit;
@@ -1244,16 +1428,31 @@ function renderAdmin() {
       });
 
       if (type !== "servicos") {
+        form.elements.namedItem("imagemModo").value = item.imagemModo || "contain";
+        form.elements.namedItem("imagemAltura").value = item.imagemAltura || 320;
+
         document.getElementById(type + "Preview").innerHTML =
           item.imagem
-            ? `<img src="${escapeHTML(item.imagem)}"
-                   alt="Imagem atual"
-                   style="width:150px;border-radius:10px">`
+            ? `
+              <img src="${escapeHTML(item.imagem)}"
+                alt="Imagem atual"
+                style="
+                  width:100%;
+                  max-width:260px;
+                  height:300px;
+                  object-fit:contain;
+                  background:#101010;
+                  border-radius:10px;
+                ">
+            `
             : "";
       }
 
       form.scrollIntoView({ behavior: "smooth" });
+      return;
     }
+
+    /* EXCLUIR ITEM */
 
     if (deleteButton) {
       const type = deleteButton.dataset.delete;
@@ -1269,7 +1468,11 @@ function renderAdmin() {
       } else {
         data[type].splice(index, 0, removed[0]);
       }
+
+      return;
     }
+
+    /* REORDENAR PROJETOS */
 
     if (moveButton) {
       const index = Number(moveButton.dataset.index);
