@@ -473,28 +473,44 @@ function renderHome() {
   $("#conteudo").innerHTML = `
     <section class="hero">
       <div class="container hero-content">
-        <div>
-          <span class="eyebrow">${escapeHTML(data.profissao)}</span>
-          <h1>Olá, eu sou ${escapeHTML(data.nome)}.</h1>
-          <p>${escapeHTML(data.apresentacao)}</p>
-          <a href="projetos.html" class="btn">Conheça meus projetos</a>
-          <a href="sobre.html" class="btn btn-secondary">Sobre mim</a>
-        </div>
 
-        <div style="display:flex;justify-content:center">
-          ${data.foto ? `
-            <img class="hero-image"
-              src="${escapeHTML(data.foto)}"
-              alt="Foto de ${escapeHTML(data.nome)}"
-              style="
-                width:${largura}%;
-                height:${altura}px;
-                max-height:none;
-                object-fit:${modo};
-                object-position:${escapeHTML(data.fotoPosicao)};
-              "
-              onerror="this.style.display='none'">
-          ` : ""}
+        <div class="hero-copy">
+
+          <div class="hero-top">
+            <div class="hero-heading">
+              <span class="eyebrow">${escapeHTML(data.profissao)}</span>
+              <h1>Olá, eu sou ${escapeHTML(data.nome)}.</h1>
+            </div>
+
+            <div class="hero-photo">
+              ${data.foto ? `
+                <img class="hero-image"
+                  src="${escapeHTML(data.foto)}"
+                  alt="Foto de ${escapeHTML(data.nome)}"
+                  style="
+                    width:${largura}%;
+                    height:${altura}px;
+                    max-height:none;
+                    object-fit:${modo};
+                    object-position:${escapeHTML(data.fotoPosicao)};
+                  "
+                  onerror="this.style.display='none'">
+              ` : ""}
+            </div>
+          </div>
+
+          <div class="hero-description">
+            <p>${escapeHTML(data.apresentacao)}</p>
+
+            <a href="projetos.html" class="btn">
+              Conheça meus projetos
+            </a>
+
+            <a href="sobre.html" class="btn btn-secondary">
+              Sobre mim
+            </a>
+          </div>
+
         </div>
       </div>
     </section>
@@ -510,7 +526,9 @@ function renderHome() {
           ${data.projetos.filter(p => p.destaque).map(projectCard).join("")}
         </div>
 
-        <a href="projetos.html" class="btn">Ver todos os projetos</a>
+        <a href="projetos.html" class="btn">
+          Ver todos os projetos
+        </a>
       </div>
     </section>
   `;
