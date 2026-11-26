@@ -67,7 +67,9 @@ Acredito que a tecnologia abre caminhos, a criatividade dá vida às ideias e ca
     }
   ],
 
-  certificados: [],
+   certificados: [],
+
+  experiencias: [],
 
   eventos: [],
 
