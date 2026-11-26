@@ -9,6 +9,7 @@ const pages = [
   ["Serviços", "servicos.html", "servicos"],
   ["Projetos", "projetos.html", "projetos"],
   ["Certificados", "certificados.html", "certificados"],
+  ["Experiência", "experiencias.html", "experiencias"],
   ["Eventos", "eventos.html", "eventos"],
   ["Diário", "diario.html", "diario"],
   ["Contato", "contato.html", "contato"]
@@ -62,6 +63,18 @@ const collections = {
       ["link", "Link do certificado", "url"]
     ]
   },
+    experiencias: {
+    title: "Experiências Profissionais",
+    fields: [
+      ["cargo", "Cargo"],
+      ["empresa", "Empresa"],
+      ["inicio", "Data de início"],
+      ["fim", "Data de término"],
+      ["atual", "Trabalho atualmente neste local", "checkbox"],
+      ["descricao", "Descrição das atividades", "textarea"]
+    ]
+  },
+  
   eventos: {
     title: "Eventos",
     fields: [
@@ -140,9 +153,10 @@ function normalizeImages(item) {
 function completeData(source) {
   const result = { ...portfolioData, ...source };
 
-  [
+      [
     "projetos",
     "certificados",
+    "experiencias",
     "eventos",
     "diario",
     "servicos"
