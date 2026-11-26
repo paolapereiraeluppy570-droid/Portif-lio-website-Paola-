@@ -269,6 +269,72 @@ h3 {
 }
 
 .card p {
+
+  
+/* ==========================================
+   PP STUDIO - HERO DESKTOP / TELAS GRANDES
+========================================== */
+
+@media (min-width: 801px) {
+
+  .hero {
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    padding: 55px 0;
+  }
+
+  .hero .container.hero-content {
+    width: calc(100% - 100px);
+    max-width: 1550px;
+    margin: 0 auto;
+
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: center;
+
+    gap: 70px;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(54px, 5vw, 88px);
+    line-height: 1.05;
+    max-width: 800px;
+  }
+
+  .hero-content p {
+    font-size: clamp(17px, 1.3vw, 21px);
+    line-height: 1.8;
+    max-width: 720px;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: min(72vh, 750px);
+    max-height: none;
+
+    object-fit: contain;
+    object-position: center;
+  }
+
+}
+
+/* TELAS EXTRA GRANDES */
+
+@media (min-width: 1600px) {
+
+  .hero .container.hero-content {
+    max-width: 1700px;
+    gap: 100px;
+  }
+
+  .hero {
+    min-height: calc(100vh - 80px);
+  }
+
+}
+  
   font-size: 14px;
   color: var(--cinza);
 }
