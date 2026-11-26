@@ -682,6 +682,51 @@ function renderCertificates() {
   `;
 }
 
+
+/* =====================================================
+   EXPERIÊNCIAS PROFISSIONAIS
+===================================================== */
+
+function renderExperiencias() {
+  const experiencias = [...(data.experiencias || [])].reverse();
+
+  $("#conteudo").innerHTML = `
+    ${heading(
+      "Experiências Profissionais",
+      "Minha trajetória, aprendizados e experiências no mercado de trabalho."
+    )}
+
+    <section class="section">
+      <div class="container">
+
+        ${experiencias.length ? `
+          <div class="grid">
+            ${experiencias.map(item => `
+              <article class="card">
+                <h3>${escapeHTML(item.cargo)}</h3>
+
+                <p><strong>${escapeHTML(item.empresa)}</strong></p>
+
+                <p>
+                  ${escapeHTML(item.inicio || "")}
+                  —
+                  ${item.atual ? "Atualmente" : escapeHTML(item.fim || "")}
+                </p>
+
+                <p>${escapeHTML(item.descricao || "")}</p>
+              </article>
+            `).join("")}
+          </div>
+        ` : `
+          <p>Minhas experiências profissionais serão adicionadas em breve.</p>
+        `}
+
+      </div>
+    </section>
+  `;
+}
+
+
 /* =====================================================
    EVENTOS
 ===================================================== */
@@ -1947,6 +1992,7 @@ async function start() {
       servicos: renderServices,
       projetos: renderProjects,
       certificados: renderCertificates,
+      experiencias: renderExperiencias,
       eventos: renderEvents,
       diario: renderDiary,
       contato: renderContact
