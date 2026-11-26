@@ -1393,6 +1393,67 @@ function renderAdmin() {
       </div>
     </section>
   `;
+  
+  /* ORGANIZAR AS ÁREAS DO PAINEL */
+
+  const adminContainer = $("#conteudo .container");
+  const adminPanels = Array.from(
+    adminContainer.querySelectorAll(":scope > .admin-panel")
+  );
+
+  const adminGroups = [
+    {
+      title: "Conta e perfil",
+      panels: [
+        "Minha conta",
+        "Perfil e apresentação",
+        "Logo do PP Studio",
+        "Redes sociais e contatos"
+      ]
+    },
+    {
+      title: "Portfólio",
+      panels: ["Serviços", "Projetos"]
+    },
+    {
+      title: "Carreira",
+      panels: ["Certificados", "Experiências Profissionais"]
+    },
+    {
+      title: "Atividades",
+      panels: ["Eventos", "Diário"]
+    },
+    {
+      title: "Backup",
+      panels: ["Backup do portfólio"]
+    }
+  ];
+
+  adminPanels.forEach(panel => panel.remove());
+
+  adminGroups.forEach((group, index) => {
+    const details = document.createElement("details");
+    details.className = "admin-group";
+
+    if (index === 0) details.open = true;
+
+    const summary = document.createElement("summary");
+    summary.textContent = group.title;
+
+    details.appendChild(summary);
+
+    group.panels.forEach(panelTitle => {
+      const panel = adminPanels.find(item =>
+        item.querySelector("h2")?.textContent.trim() === panelTitle
+      );
+
+      if (panel) details.appendChild(panel);
+    });
+
+    adminContainer.appendChild(details);
+  });
+
+  
 
   /* SAIR */
 
